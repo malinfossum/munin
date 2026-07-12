@@ -25,7 +25,9 @@ npm install
 node src/cli.js index
 ```
 
-Point `munin.config.json` at your memory folders (defaults to `~/.claude/memory`).
+Point `munin.config.json` at your memory folders (defaults to `~/.claude/memory`). For
+machine-specific folders, create `munin.config.local.json` next to it (gitignored) — any field
+set there overrides the committed config, so your personal paths never enter the repo.
 
 ## Usage
 

@@ -5,15 +5,14 @@ import { fileURLToPath } from "node:url"
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url))
 
+// munin.config.json is the committed default; munin.config.local.json
+// (gitignored) overrides any field for machine-specific folders.
 export async function loadConfig() {
-	let raw
-	try {
-		raw = await readFile(path.join(projectRoot, "munin.config.json"), "utf8")
-	} catch {
-		throw new Error("munin.config.json not found in the project root")
-	}
+	const base = await readConfigFile("munin.config.json")
+	if (!base) throw new Error("munin.config.json not found in the project root")
+	const local = await readConfigFile("munin.config.local.json")
+	const config = { ...base, ...local }
 
-	const config = JSON.parse(raw)
 	if (!Array.isArray(config.sources) || config.sources.length === 0) {
 		throw new Error('config needs at least one entry in "sources"')
 	}
@@ -26,6 +25,20 @@ export async function loadConfig() {
 	config.minScore = config.minScore ?? 0.35
 	config.dataDir = path.join(projectRoot, "data")
 	return config
+}
+
+async function readConfigFile(name) {
+	let raw
+	try {
+		raw = await readFile(path.join(projectRoot, name), "utf8")
+	} catch {
+		return null
+	}
+	try {
+		return JSON.parse(raw)
+	} catch {
+		throw new Error(`${name} is not valid JSON`)
+	}
 }
 
 function expandHome(sourcePath) {
