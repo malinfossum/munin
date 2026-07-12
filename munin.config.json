@@ -1,0 +1,6 @@
+{
+	"model": "Xenova/all-MiniLM-L6-v2",
+	"sources": ["~/.claude/memory"],
+	"topK": 5,
+	"minScore": 0.35
+}
