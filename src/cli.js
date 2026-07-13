@@ -44,7 +44,9 @@ async function runSearch(args) {
 	const index = await loadIndex(config.dataDir)
 	if (!index) throw new Error('no index yet — run "munin index" first')
 	if (index.meta.model !== config.model || index.meta.modelRevision !== config.modelRevision) {
-		throw new Error('the index was built with a different model — run "munin index" to rebuild')
+		throw new Error(
+			'the index was built with a different model or revision — run "munin index" to rebuild'
+		)
 	}
 
 	const embed = await createEmbedder(config)

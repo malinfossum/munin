@@ -32,7 +32,7 @@ set there overrides the committed config, so your personal paths never enter the
 ### Config options
 
 - `sources` — array of folders to index. Each entry is either `"~/path"` or
-  `{ "path": "~/path", "weight": 0.5 }`; lower-weight sources rank below curated memory.
+  `{ "path": "~/path", "weight": 0.5 }`; lower-weight sources rank below curated memory. Changes to a source's weight take effect after the next `munin index` run.
 - `topK` — max results returned (default 5).
 - `minScore` — confidence threshold below which Munin says "No confident match." (default 0.3).
 - `semanticWeight` — weight of cosine similarity in the final ranking (default 0.7).
@@ -40,7 +40,7 @@ set there overrides the committed config, so your personal paths never enter the
 - `recencyWeight` — weight of the recency boost in the final ranking (default 0.05).
 - `recencyHalfLifeDays` — how fast the recency boost decays with age, in days (default 90).
 - `modelRevision` — pinned commit hash of the embedding model, so upstream changes can't
-  silently swap weights.
+  silently swap weights (default `"main"` when omitted).
 
 ## Usage
 
