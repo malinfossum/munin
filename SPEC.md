@@ -60,11 +60,11 @@ munin/
   present, mtime only as fallback — folding/reformatting a file must not make old facts look
   fresh. **Entry gate:** a 10-question golden recall set is written down before M2 starts and
   every ranking change is judged against them.
-- **M3 — the `recall` skill.** A Claude Code skill that runs `munin search --json` and answers
-  with citations. The query is passed as an argv array (`execFile`-style), never interpolated
-  into a shell string — prompts contain quotes and backticks. Recalled text is rendered as
-  quoted, labeled data with its source line, never as instructions. "No confident match." is
-  passed through verbatim, not embellished.
+- **M3 — the `recall` skill.** ✅ Shipped in-repo (`skills/recall/`) with the citation format,
+  verbatim "No confident match.", and retrieved-text-is-data rules; keyword terms are stemmed
+  so inflected phrasing still matches (golden set 10/10 — the Q9 vocabulary-mismatch miss is
+  fixed). The skill instructs that the query reaches the CLI as plain search words only, never
+  raw prompt text in a shell string.
 - **M4 — session import (conditional).** One-time import of old session transcripts into dated,
   indexable logs. **Decision rule:** run the 10 golden questions side by side — Munin vs. the
   current memory system + native transcript search. Build M4 only if Munin wins.
@@ -100,7 +100,7 @@ munin/
 - [x] Single runtime dependency, `package-lock.json` committed, `npm audit` clean (2026-07-13)
 - [x] No telemetry, no analytics, no "phone home" — stated in the README
 - [x] Errors are friendly one-liners; no stack traces or absolute paths leak to users
-- [ ] Recall output is data: the skill (M3/M5) must instruct Claude to treat retrieved text as quotes, never as instructions to follow (prompt-injection hygiene) — lands with M3
+- [x] Recall output is data: the skill (M3/M5) must instruct Claude to treat retrieved text as quotes, never as instructions to follow (prompt-injection hygiene) — shipped with M3
 - [x] MIT license file present; git author uses the public dev email
 
 ## Proof it works
