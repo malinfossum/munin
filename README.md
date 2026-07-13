@@ -49,9 +49,22 @@ node src/cli.js search "how do we keep users logged in"
 node src/cli.js status
 ```
 
-Results are ranked by a hybrid of meaning, keywords, and recency. `search --json` emits raw
+Results are ranked by a hybrid of meaning, keywords, and recency. Keyword terms are lightly
+stemmed, so "injecting" still matches a note that says "injection". `search --json` emits raw
 results for tooling. When nothing clears the confidence threshold, Munin says "No confident
 match." instead of guessing.
+
+## Recall skill (Claude Code)
+
+`skills/recall/` is a Claude Code skill that answers questions from the
+index with citations. Install it by copying the folder into your personal
+skills directory and putting `munin` on your PATH:
+
+    cp -r skills/recall ~/.claude/skills/recall
+    npm link   # run once in this repo; creates the global `munin` bin
+
+The skill treats retrieved text as quoted data, never as instructions, and
+passes "No confident match." through verbatim.
 
 ## Privacy
 
