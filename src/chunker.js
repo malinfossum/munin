@@ -1,16 +1,24 @@
 const HEADING = /^#{1,4}\s+(.*)/
+const MAX_WORDS = 200
+const OVERLAP_WORDS = 40
 
-// Splits a markdown file into one chunk per heading section.
+// Splits a markdown file into one chunk per heading section; long
+// sections are further split into overlapping word windows.
 // Text before the first heading becomes an "(intro)" chunk.
-export function chunkMarkdown(text, { file, date }) {
+export function chunkMarkdown(text, { file, date }, options = {}) {
+	const maxWords = options.maxWords ?? MAX_WORDS
+	const overlapWords = options.overlapWords ?? OVERLAP_WORDS
 	const chunks = []
 	let heading = "(intro)"
 	let buffer = []
 
 	const flush = () => {
 		const body = buffer.join("\n").trim()
-		if (body) chunks.push({ file, heading, date, text: body })
 		buffer = []
+		if (!body) return
+		for (const part of splitLongText(body, maxWords, overlapWords)) {
+			chunks.push({ file, heading, date, text: part })
+		}
 	}
 
 	for (const line of text.split("\n")) {
@@ -24,4 +32,19 @@ export function chunkMarkdown(text, { file, date }) {
 	}
 	flush()
 	return chunks
+}
+
+// The embedding model truncates around 256 tokens, so a fact at the
+// bottom of a long section would be invisible without this: every word
+// must land inside at least one window.
+export function splitLongText(text, maxWords = MAX_WORDS, overlapWords = OVERLAP_WORDS) {
+	const tokens = text.split(/\s+/)
+	if (tokens.length <= maxWords) return [text]
+	const step = maxWords - overlapWords
+	const parts = []
+	for (let start = 0; ; start += step) {
+		parts.push(tokens.slice(start, start + maxWords).join(" "))
+		if (start + maxWords >= tokens.length) break
+	}
+	return parts
 }
