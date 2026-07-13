@@ -1,6 +1,7 @@
 const HEADING = /^#{1,4}\s+(.*)/
 const MAX_WORDS = 200
 const OVERLAP_WORDS = 40
+const INLINE_DATE = /\b(20\d{2}-[01]\d-[0-3]\d)\b/g
 
 // Splits a markdown file into one chunk per heading section; long
 // sections are further split into overlapping word windows.
@@ -17,7 +18,7 @@ export function chunkMarkdown(text, { file, date }, options = {}) {
 		buffer = []
 		if (!body) return
 		for (const part of splitLongText(body, maxWords, overlapWords)) {
-			chunks.push({ file, heading, date, text: part })
+			chunks.push({ file, heading, date: latestInlineDate(part) ?? date, text: part })
 		}
 	}
 
@@ -48,4 +49,15 @@ export function splitLongText(text, maxWords = MAX_WORDS, overlapWords = OVERLAP
 		if (start + maxWords >= tokens.length) break
 	}
 	return parts
+}
+
+// Dated entries ("2026-05-14 — …") date the chunk by content, not file
+// mtime — folding or reformatting a file must not make old facts look
+// fresh. ISO date strings compare correctly as plain strings.
+export function latestInlineDate(text) {
+	let latest = null
+	for (const [, date] of text.matchAll(INLINE_DATE)) {
+		if (latest === null || date > latest) latest = date
+	}
+	return latest
 }
