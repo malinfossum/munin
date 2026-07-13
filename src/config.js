@@ -27,6 +27,7 @@ export async function loadConfig() {
 	config.keywordWeight = config.keywordWeight ?? 0.3
 	config.recencyWeight = config.recencyWeight ?? 0.05
 	config.recencyHalfLifeDays = config.recencyHalfLifeDays ?? 90
+	config.modelRevision = config.modelRevision ?? "main"
 	config.dataDir = path.join(projectRoot, "data")
 	return config
 }

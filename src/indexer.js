@@ -12,7 +12,10 @@ const EMBED_BATCH = 16
 export async function buildIndex(config, embed) {
 	const previous = await loadIndex(config.dataDir)
 	const reusable = new Map()
-	if (previous?.meta.model === config.model) {
+	if (
+		previous?.meta.model === config.model &&
+		previous?.meta.modelRevision === config.modelRevision
+	) {
 		for (const chunk of previous.chunks) reusable.set(chunk.hash, chunk.vector)
 	}
 
@@ -52,6 +55,7 @@ export async function buildIndex(config, embed) {
 
 	const meta = {
 		model: config.model,
+		modelRevision: config.modelRevision,
 		indexedAt: new Date().toISOString(),
 		files: fileCount,
 		chunks: chunks.length,

@@ -5,7 +5,7 @@ import path from "node:path"
 // The model is downloaded on first use and cached under data/models.
 // Once cached, remote lookups are disabled so "fully offline after
 // download" is a guarantee the code keeps, not a hope.
-export async function createEmbedder({ model, dataDir }) {
+export async function createEmbedder({ model, modelRevision, dataDir }) {
 	const { env, pipeline } = await import("@huggingface/transformers")
 	const cacheDir = path.join(dataDir, "models")
 	env.cacheDir = cacheDir
@@ -13,7 +13,7 @@ export async function createEmbedder({ model, dataDir }) {
 		env.allowRemoteModels = false
 	}
 
-	const extractor = await pipeline("feature-extraction", model)
+	const extractor = await pipeline("feature-extraction", model, { revision: modelRevision })
 
 	return async function embed(texts) {
 		const output = await extractor(texts, { pooling: "mean", normalize: true })

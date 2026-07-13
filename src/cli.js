@@ -43,7 +43,7 @@ async function runSearch(args) {
 	const config = await loadConfig()
 	const index = await loadIndex(config.dataDir)
 	if (!index) throw new Error('no index yet — run "munin index" first')
-	if (index.meta.model !== config.model) {
+	if (index.meta.model !== config.model || index.meta.modelRevision !== config.modelRevision) {
 		throw new Error('the index was built with a different model — run "munin index" to rebuild')
 	}
 
@@ -78,8 +78,9 @@ async function runStatus() {
 		console.log('No index yet — run "munin index" first.')
 		return
 	}
-	const { model, indexedAt, files, chunks } = index.meta
+	const { model, modelRevision, indexedAt, files, chunks } = index.meta
 	console.log(`Model:    ${model}`)
+	console.log(`Revision: ${modelRevision ?? "(not recorded)"}`)
 	console.log(`Indexed:  ${indexedAt}`)
 	console.log(`Files:    ${files}`)
 	console.log(`Chunks:   ${chunks}`)
