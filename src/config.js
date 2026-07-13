@@ -20,9 +20,14 @@ export async function loadConfig() {
 		throw new Error('config needs a "model" name')
 	}
 
-	config.sources = config.sources.map(expandHome)
+	config.sources = config.sources.map(normalizeSource)
 	config.topK = config.topK ?? 5
-	config.minScore = config.minScore ?? 0.35
+	config.minScore = config.minScore ?? 0.3
+	config.semanticWeight = config.semanticWeight ?? 0.7
+	config.keywordWeight = config.keywordWeight ?? 0.3
+	config.recencyWeight = config.recencyWeight ?? 0.05
+	config.recencyHalfLifeDays = config.recencyHalfLifeDays ?? 90
+	config.modelRevision = config.modelRevision ?? "main"
 	config.dataDir = path.join(projectRoot, "data")
 	return config
 }
@@ -46,4 +51,14 @@ function expandHome(sourcePath) {
 		return path.join(homedir(), sourcePath.slice(1))
 	}
 	return sourcePath
+}
+
+// A source is "~/path" or { "path": "~/path", "weight": 0.8 } — curated
+// memory outranks imported material via the weight multiplier (spec M2/M4).
+export function normalizeSource(entry) {
+	const source = typeof entry === "string" ? { path: entry } : { ...entry }
+	if (typeof source.path !== "string" || source.path.length === 0) {
+		throw new Error('each source needs a "path"')
+	}
+	return { path: expandHome(source.path), weight: source.weight ?? 1 }
 }

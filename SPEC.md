@@ -50,13 +50,15 @@ munin/
   skipped during the walk (junction/symlink subdirs on Windows report `isDirectory() === false`
   and would otherwise vanish silently — a recall tool that silently indexes less than it claims
   breaks its own honesty promise).
-- **M2 — hybrid + rerank.** Keyword scoring merged with cosine; recency boost; source weighting
-  (curated memory above imported summaries). **Correctness requirements, not polish:**
+- **M2 — hybrid + rerank.** ✅ Hybrid keyword+cosine, recency from inline dates, sub-chunking
+  with overlap, source weights, pinned model revision, offline-first load. Golden set 9/10
+  (from 6/10 baseline); the miss is a vocabulary-mismatch — query expansion/stemming queued
+  for M3. **Correctness requirements, not polish (as scoped going in):**
   (a) sub-chunk sections longer than ~200 words with overlap — the model truncates at ~256
   tokens, so today a fact at the bottom of a long section is invisible and Munin can't be
   trusted to say "no match"; (b) recency uses inline entry dates (`2026-05-14 — …`) when
   present, mtime only as fallback — folding/reformatting a file must not make old facts look
-  fresh. **Entry gate:** the 10 golden recall questions are written down before M2 starts and
+  fresh. **Entry gate:** a 10-question golden recall set is written down before M2 starts and
   every ranking change is judged against them.
 - **M3 — the `recall` skill.** A Claude Code skill that runs `munin search --json` and answers
   with citations. The query is passed as an argv array (`execFile`-style), never interpolated
@@ -93,8 +95,8 @@ munin/
 - [x] Offline mode is enforced, not assumed: once the model is cached, remote lookups are
       disabled (`env.allowRemoteModels = false`) so "fully offline after download" is a
       guarantee the code keeps, and a hub outage can't break indexing
-- [ ] Model revision pinned (not just the name) so upstream changes can't silently swap weights
-      — open at v0.1.0, do alongside M2
+- [x] Model revision pinned (not just the name) so upstream changes can't silently swap weights
+      — done with M2 (pinned 751bff37…, offline-first load with one-time fetch)
 - [x] Single runtime dependency, `package-lock.json` committed, `npm audit` clean (2026-07-13)
 - [x] No telemetry, no analytics, no "phone home" — stated in the README
 - [x] Errors are friendly one-liners; no stack traces or absolute paths leak to users

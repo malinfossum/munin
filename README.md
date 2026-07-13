@@ -29,6 +29,19 @@ Point `munin.config.json` at your memory folders (defaults to `~/.claude/memory`
 machine-specific folders, create `munin.config.local.json` next to it (gitignored) — any field
 set there overrides the committed config, so your personal paths never enter the repo.
 
+### Config options
+
+- `sources` — array of folders to index. Each entry is either `"~/path"` or
+  `{ "path": "~/path", "weight": 0.5 }`; lower-weight sources rank below curated memory. Changes to a source's weight take effect after the next `munin index` run.
+- `topK` — max results returned (default 5).
+- `minScore` — confidence threshold below which Munin says "No confident match." (default 0.3).
+- `semanticWeight` — weight of cosine similarity in the final ranking (default 0.7).
+- `keywordWeight` — weight of keyword/IDF matching in the final ranking (default 0.3).
+- `recencyWeight` — weight of the recency boost in the final ranking (default 0.05).
+- `recencyHalfLifeDays` — how fast the recency boost decays with age, in days (default 90).
+- `modelRevision` — pinned commit hash of the embedding model, so upstream changes can't
+  silently swap weights (default `"main"` when omitted).
+
 ## Usage
 
 ```
@@ -36,8 +49,9 @@ node src/cli.js search "how do we keep users logged in"
 node src/cli.js status
 ```
 
-`search --json` emits raw results for tooling. When nothing clears the confidence threshold,
-Munin says "No confident match." instead of guessing.
+Results are ranked by a hybrid of meaning, keywords, and recency. `search --json` emits raw
+results for tooling. When nothing clears the confidence threshold, Munin says "No confident
+match." instead of guessing.
 
 ## Privacy
 

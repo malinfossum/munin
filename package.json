@@ -1,6 +1,6 @@
 {
 	"name": "@malinfossum/munin",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Local semantic search over your AI memory files — recall by meaning, cited by source.",
 	"type": "module",
 	"bin": {

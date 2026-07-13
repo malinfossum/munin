@@ -12,7 +12,10 @@ const EMBED_BATCH = 16
 export async function buildIndex(config, embed) {
 	const previous = await loadIndex(config.dataDir)
 	const reusable = new Map()
-	if (previous?.meta.model === config.model) {
+	if (
+		previous?.meta.model === config.model &&
+		previous?.meta.modelRevision === config.modelRevision
+	) {
 		for (const chunk of previous.chunks) reusable.set(chunk.hash, chunk.vector)
 	}
 
@@ -20,18 +23,19 @@ export async function buildIndex(config, embed) {
 	const skipped = []
 	let fileCount = 0
 	for (const source of config.sources) {
-		const found = await findMarkdownFiles(source)
+		const found = await findMarkdownFiles(source.path)
 		skipped.push(...found.skipped)
 		for (const filePath of found.files) {
 			fileCount++
 			const text = await readFile(filePath, "utf8")
 			const { mtime } = await stat(filePath)
 			const chunkMeta = {
-				file: path.relative(source, filePath).replaceAll("\\", "/"),
+				file: path.relative(source.path, filePath).replaceAll("\\", "/"),
 				date: mtime.toISOString().slice(0, 10),
 			}
 			for (const chunk of chunkMarkdown(text, chunkMeta)) {
 				chunk.hash = hashChunk(chunk)
+				chunk.weight = source.weight
 				chunks.push(chunk)
 			}
 		}
@@ -51,6 +55,7 @@ export async function buildIndex(config, embed) {
 
 	const meta = {
 		model: config.model,
+		modelRevision: config.modelRevision,
 		indexedAt: new Date().toISOString(),
 		files: fileCount,
 		chunks: chunks.length,

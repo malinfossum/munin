@@ -1,16 +1,25 @@
 const HEADING = /^#{1,4}\s+(.*)/
+const MAX_WORDS = 200
+const OVERLAP_WORDS = 40
+const INLINE_DATE = /\b(20\d{2}-[01]\d-[0-3]\d)\b/g
 
-// Splits a markdown file into one chunk per heading section.
+// Splits a markdown file into one chunk per heading section; long
+// sections are further split into overlapping word windows.
 // Text before the first heading becomes an "(intro)" chunk.
-export function chunkMarkdown(text, { file, date }) {
+export function chunkMarkdown(text, { file, date }, options = {}) {
+	const maxWords = options.maxWords ?? MAX_WORDS
+	const overlapWords = options.overlapWords ?? OVERLAP_WORDS
 	const chunks = []
 	let heading = "(intro)"
 	let buffer = []
 
 	const flush = () => {
 		const body = buffer.join("\n").trim()
-		if (body) chunks.push({ file, heading, date, text: body })
 		buffer = []
+		if (!body) return
+		for (const part of splitLongText(body, maxWords, overlapWords)) {
+			chunks.push({ file, heading, date: latestInlineDate(part) ?? date, text: part })
+		}
 	}
 
 	for (const line of text.split("\n")) {
@@ -24,4 +33,31 @@ export function chunkMarkdown(text, { file, date }) {
 	}
 	flush()
 	return chunks
+}
+
+// The embedding model truncates around 256 tokens, so a fact at the
+// bottom of a long section would be invisible without this: every word
+// must land inside at least one window.
+export function splitLongText(text, maxWords = MAX_WORDS, overlapWords = OVERLAP_WORDS) {
+	if (overlapWords >= maxWords) throw new Error("overlapWords must be smaller than maxWords")
+	const tokens = text.split(/\s+/)
+	if (tokens.length <= maxWords) return [text]
+	const step = maxWords - overlapWords
+	const parts = []
+	for (let start = 0; ; start += step) {
+		parts.push(tokens.slice(start, start + maxWords).join(" "))
+		if (start + maxWords >= tokens.length) break
+	}
+	return parts
+}
+
+// Dated entries ("2026-05-14 — …") date the chunk by content, not file
+// mtime — folding or reformatting a file must not make old facts look
+// fresh. ISO date strings compare correctly as plain strings.
+export function latestInlineDate(text) {
+	let latest = null
+	for (const [, date] of text.matchAll(INLINE_DATE)) {
+		if (latest === null || date > latest) latest = date
+	}
+	return latest
 }

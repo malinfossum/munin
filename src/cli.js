@@ -43,13 +43,19 @@ async function runSearch(args) {
 	const config = await loadConfig()
 	const index = await loadIndex(config.dataDir)
 	if (!index) throw new Error('no index yet — run "munin index" first')
-	if (index.meta.model !== config.model) {
-		throw new Error('the index was built with a different model — run "munin index" to rebuild')
+	if (index.meta.model !== config.model || index.meta.modelRevision !== config.modelRevision) {
+		throw new Error(
+			'the index was built with a different model or revision — run "munin index" to rebuild'
+		)
 	}
 
 	const embed = await createEmbedder(config)
 	const [queryVector] = await embed([query])
-	const results = rankChunks(queryVector, index.chunks, config)
+	const today = new Date().toISOString().slice(0, 10)
+	const results = rankChunks({ vector: queryVector, text: query }, index.chunks, {
+		...config,
+		today,
+	})
 
 	if (asJson) {
 		console.log(JSON.stringify(results.map(toResult), null, 2))
@@ -74,15 +80,16 @@ async function runStatus() {
 		console.log('No index yet — run "munin index" first.')
 		return
 	}
-	const { model, indexedAt, files, chunks } = index.meta
+	const { model, modelRevision, indexedAt, files, chunks } = index.meta
 	console.log(`Model:    ${model}`)
+	console.log(`Revision: ${modelRevision ?? "(not recorded)"}`)
 	console.log(`Indexed:  ${indexedAt}`)
 	console.log(`Files:    ${files}`)
 	console.log(`Chunks:   ${chunks}`)
 }
 
-function toResult({ file, heading, date, score, text }) {
-	return { file, heading, date, score, text }
+function toResult({ file, heading, date, score, semantic, keyword, text }) {
+	return { file, heading, date, score, semantic, keyword, text }
 }
 
 function preview(text) {
