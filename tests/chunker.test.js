@@ -51,6 +51,10 @@ test("every word of a long section lands in some window", () => {
 	assert.equal(seen.size, 11)
 })
 
+test("splitLongText rejects an overlap that cannot advance", () => {
+	assert.throws(() => splitLongText("some words here", 4, 4), /overlap/)
+})
+
 test("a long section becomes several chunks under the same heading", () => {
 	const chunks = chunkMarkdown(`# Long\n${words(10)}`, meta, { maxWords: 4, overlapWords: 2 })
 	assert.equal(chunks.length, 4)

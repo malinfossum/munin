@@ -38,6 +38,7 @@ export function chunkMarkdown(text, { file, date }, options = {}) {
 // bottom of a long section would be invisible without this: every word
 // must land inside at least one window.
 export function splitLongText(text, maxWords = MAX_WORDS, overlapWords = OVERLAP_WORDS) {
+	if (overlapWords >= maxWords) throw new Error("overlapWords must be smaller than maxWords")
 	const tokens = text.split(/\s+/)
 	if (tokens.length <= maxWords) return [text]
 	const step = maxWords - overlapWords
