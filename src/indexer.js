@@ -20,18 +20,19 @@ export async function buildIndex(config, embed) {
 	const skipped = []
 	let fileCount = 0
 	for (const source of config.sources) {
-		const found = await findMarkdownFiles(source)
+		const found = await findMarkdownFiles(source.path)
 		skipped.push(...found.skipped)
 		for (const filePath of found.files) {
 			fileCount++
 			const text = await readFile(filePath, "utf8")
 			const { mtime } = await stat(filePath)
 			const chunkMeta = {
-				file: path.relative(source, filePath).replaceAll("\\", "/"),
+				file: path.relative(source.path, filePath).replaceAll("\\", "/"),
 				date: mtime.toISOString().slice(0, 10),
 			}
 			for (const chunk of chunkMarkdown(text, chunkMeta)) {
 				chunk.hash = hashChunk(chunk)
+				chunk.weight = source.weight
 				chunks.push(chunk)
 			}
 		}
