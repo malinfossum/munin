@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { dot, keywordScore, rankChunks, recencyBoost, tokenize } from "../src/search.js"
+import { dot, keywordScore, rankChunks, recencyBoost, stem, tokenize } from "../src/search.js"
 
 const options = {
 	topK: 5,
@@ -92,6 +92,32 @@ test("source weight multiplies the final score", () => {
 	]
 	const results = rankChunks({ vector: [1, 0], text: "" }, chunks, options)
 	assert.equal(results[0].heading, "curated")
+})
+
+test("stem collapses inflected forms to a shared stem", () => {
+	assert.equal(stem("injecting"), "inject")
+	assert.equal(stem("injected"), "inject")
+	assert.equal(stem("injection"), "inject")
+	assert.equal(stem("injections"), "inject")
+	assert.equal(stem("guardrails"), "guardrail")
+	assert.equal(stem("memories"), "memory")
+	assert.equal(stem("prompts"), "prompt")
+})
+
+test("stem leaves short words, ss-words and norwegian words alone", () => {
+	assert.equal(stem("was"), "was")
+	assert.equal(stem("less"), "less")
+	assert.equal(stem("blåbær"), "blåbær")
+	assert.equal(stem("kenaz"), "kenaz")
+})
+
+test("inflection differences still earn keyword credit", () => {
+	const chunks = [
+		chunk("guardrails", [0.5, 0.86], "guardrails for injection of memories into a prompt"),
+		chunk("other", [0.6, 0.8], "nothing relevant"),
+	]
+	const results = rankChunks({ vector: [1, 0], text: "injecting memory prompts" }, chunks, options)
+	assert.equal(results[0].heading, "guardrails")
 })
 
 test("dot product of normalized vectors is cosine similarity", () => {

@@ -11,8 +11,10 @@ export function rankChunks(query, chunks, options) {
 		recencyHalfLifeDays,
 		today,
 	} = options
-	const terms = tokenize(query.text)
-	const chunkTerms = chunks.map((chunk) => new Set(tokenize(`${chunk.heading} ${chunk.text}`)))
+	const terms = [...new Set(tokenize(query.text).map(stem))]
+	const chunkTerms = chunks.map(
+		(chunk) => new Set(tokenize(`${chunk.heading} ${chunk.text}`).map(stem))
+	)
 	const idf = inverseDocumentFrequency(terms, chunkTerms)
 
 	return chunks
@@ -34,6 +36,37 @@ export function rankChunks(query, chunks, options) {
 // inner hyphens so Norwegian words and slugs like "fable-mode" survive.
 export function tokenize(text) {
 	return [...new Set(text.toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}-]*/gu) ?? [])]
+}
+
+const STEM_SUFFIXES = [
+	["ations", ""],
+	["ation", ""],
+	["ings", ""],
+	["ing", ""],
+	["ions", ""],
+	["ion", ""],
+	["ies", "y"],
+	["ied", "y"],
+	["ed", ""],
+	["ly", ""],
+	["es", ""],
+	["s", ""],
+]
+
+// Light suffix stemmer for the keyword leg: "injecting", "injected" and
+// "injection" all reduce to "inject", so a query phrased differently from
+// the memory still earns keyword credit. Query and chunk terms go through
+// the same rules, so only collisions matter, not linguistic correctness.
+// At most one rule fires; stems shorter than three characters fall back
+// to the original term.
+export function stem(term) {
+	for (const [suffix, replacement] of STEM_SUFFIXES) {
+		if (!term.endsWith(suffix)) continue
+		if (suffix === "s" && term.endsWith("ss")) return term
+		const base = term.slice(0, term.length - suffix.length) + replacement
+		return base.length >= 3 ? base : term
+	}
+	return term
 }
 
 function inverseDocumentFrequency(terms, chunkTerms) {
