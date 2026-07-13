@@ -22,7 +22,11 @@ export async function loadConfig() {
 
 	config.sources = config.sources.map(expandHome)
 	config.topK = config.topK ?? 5
-	config.minScore = config.minScore ?? 0.35
+	config.minScore = config.minScore ?? 0.3
+	config.semanticWeight = config.semanticWeight ?? 0.7
+	config.keywordWeight = config.keywordWeight ?? 0.3
+	config.recencyWeight = config.recencyWeight ?? 0.05
+	config.recencyHalfLifeDays = config.recencyHalfLifeDays ?? 90
 	config.dataDir = path.join(projectRoot, "data")
 	return config
 }

@@ -49,7 +49,11 @@ async function runSearch(args) {
 
 	const embed = await createEmbedder(config)
 	const [queryVector] = await embed([query])
-	const results = rankChunks(queryVector, index.chunks, config)
+	const today = new Date().toISOString().slice(0, 10)
+	const results = rankChunks({ vector: queryVector, text: query }, index.chunks, {
+		...config,
+		today,
+	})
 
 	if (asJson) {
 		console.log(JSON.stringify(results.map(toResult), null, 2))
@@ -81,8 +85,8 @@ async function runStatus() {
 	console.log(`Chunks:   ${chunks}`)
 }
 
-function toResult({ file, heading, date, score, text }) {
-	return { file, heading, date, score, text }
+function toResult({ file, heading, date, score, semantic, keyword, text }) {
+	return { file, heading, date, score, semantic, keyword, text }
 }
 
 function preview(text) {
