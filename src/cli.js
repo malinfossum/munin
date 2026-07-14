@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { loadConfig } from "./config.js"
 import { createEmbedder } from "./embedder.js"
+import { runImport } from "./importer.js"
 import { buildIndex } from "./indexer.js"
 import { rankChunks } from "./search.js"
 import { loadIndex } from "./store.js"
@@ -13,6 +14,7 @@ try {
 	if (command === "index") await runIndex()
 	else if (command === "search") await runSearch(args)
 	else if (command === "status") await runStatus()
+	else if (command === "import") await runImportCommand()
 	else printUsage()
 } catch (error) {
 	console.error(`munin: ${error.message}`)
@@ -73,6 +75,22 @@ async function runSearch(args) {
 	})
 }
 
+async function runImportCommand() {
+	const config = await loadConfig()
+	const stats = await runImport(config)
+	for (const failedPath of stats.failed) {
+		console.warn(`warning: failed to import: ${failedPath}`)
+	}
+	console.log(
+		`Imported ${stats.written} sessions (${stats.unchanged} unchanged, ${stats.skipped} empty, ${stats.failed.length} failed).`
+	)
+	if (stats.failed.length > 0) {
+		console.warn("sentinel not updated — fix the failures and re-run")
+		process.exitCode = 1
+	}
+	console.log('Run "munin index" to make the imported sessions searchable.')
+}
+
 async function runStatus() {
 	const config = await loadConfig()
 	const index = await loadIndex(config.dataDir)
@@ -102,5 +120,8 @@ function printUsage() {
 	console.log("  munin index             build or refresh the search index")
 	console.log('  munin search "query"    find memories by meaning (--json for raw output)')
 	console.log("  munin status            show what the index contains")
+	console.log(
+		"  munin import            convert configured session transcripts into data/ (opt-in)"
+	)
 	process.exitCode = command ? 1 : 0
 }
