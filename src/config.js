@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import path from "node:path"
@@ -28,7 +29,13 @@ export async function loadConfig() {
 	config.recencyWeight = config.recencyWeight ?? 0.05
 	config.recencyHalfLifeDays = config.recencyHalfLifeDays ?? 90
 	config.modelRevision = config.modelRevision ?? "main"
+	config.importSources = (config.importSources ?? []).map(normalizeImportSource)
+	config.importedWeight = config.importedWeight ?? 0.25
 	config.dataDir = path.join(projectRoot, "data")
+	config.importedDir = path.join(config.dataDir, "imported")
+	if (existsSync(config.importedDir)) {
+		config.sources.push({ path: config.importedDir, weight: config.importedWeight })
+	}
 	return config
 }
 
@@ -61,4 +68,14 @@ export function normalizeSource(entry) {
 		throw new Error('each source needs a "path"')
 	}
 	return { path: expandHome(source.path), weight: source.weight ?? 1 }
+}
+
+// Import sources are opt-in and weightless — imported chunks always rank
+// at config.importedWeight, the lowest weight in the index (spec M4).
+export function normalizeImportSource(entry) {
+	const source = typeof entry === "string" ? { path: entry } : { ...entry }
+	if (typeof source.path !== "string" || source.path.length === 0) {
+		throw new Error('each import source needs a "path"')
+	}
+	return { path: expandHome(source.path) }
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { normalizeSource } from "../src/config.js"
+import { normalizeImportSource, normalizeSource } from "../src/config.js"
 
 test("a plain string source gets weight 1", () => {
 	const source = normalizeSource("C:/memory")
@@ -14,4 +14,10 @@ test("an object source keeps its weight", () => {
 
 test("a source without a path is rejected", () => {
 	assert.throws(() => normalizeSource({ weight: 2 }), /path/)
+})
+
+test("importSources entries normalize like sources but carry no weight", () => {
+	assert.equal(normalizeImportSource("C:/transcripts").path, "C:/transcripts")
+	assert.equal(normalizeImportSource({ path: "C:/transcripts" }).weight, undefined)
+	assert.throws(() => normalizeImportSource({}), /path/)
 })
