@@ -65,14 +65,13 @@ munin/
   so inflected phrasing still matches (golden set 10/10 — the Q9 vocabulary-mismatch miss is
   fixed). The skill instructs that the query reaches the CLI as plain search words only, never
   raw prompt text in a shell string.
-- **M4 — session import (conditional).** One-time import of old session transcripts into dated,
-  indexable logs. **Decision rule:** run the 10 golden questions side by side — Munin vs. the
-  current memory system + native transcript search. Build M4 only if Munin wins.
-  **Requirements:** a secret-scrubbing pass before anything is written (session transcripts
-  contain pasted API keys, tokens, and terminal output — those must never reach the plaintext
-  index); import is opt-in per source; imported chunks carry the lowest source weight; the
-  run-once sentinel is written only after a fully successful import; document that transcripts
-  include third parties' words (collaborators, quoted web content).
+- **M4 — session import.** ✅ Gate run 2026-07-14: Munin 10/10 vs curated system 9/10 (its one
+  failure a confidently-wrong recall) vs native transcript search ~0/10 — Munin wins, M4 built.
+  `munin import` (opt-in `importSources`): user/assistant text only — tool output, tool
+  results, and thinking never reach the pipeline — secret-scrub before write, lowest source
+  weight (`importedWeight`, default 0.25), incremental sentinel written only after a fully
+  successful run, third-party-words caveat documented in the README. Golden set stays 10/10
+  with imports indexed.
 - **M5 — proactive recall ("Huginn mode").** A `UserPromptSubmit` hook runs
   `munin context "<prompt>"` and silently injects the top matches as background context — so
   brainstorming a new project automatically surfaces lessons from earlier ones. Guardrails:
