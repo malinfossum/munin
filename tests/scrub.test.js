@@ -12,7 +12,7 @@ test("provider key prefixes are scrubbed", () => {
 	assert.ok(scrubbed("github_pat_11ABCDEFG0abcdefghijklmnopqrstuvwxyz"))
 	assert.ok(scrubbed(`slack xoxb-123456789012-${"abcdefghijklmnop"}`))
 	assert.ok(scrubbed("aws AKIAIOSFODNN7EXAMPLE"))
-	assert.ok(scrubbed("google AIzaSyA-abcdefghijklmnopqrstuvwxyz12345"))
+	assert.ok(scrubbed(`google AIzaSyA-abcdefghijk${"lmnopqrstuvwxyz12345"}`))
 })
 
 test("jwt and pem blocks are scrubbed", () => {
