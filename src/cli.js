@@ -103,6 +103,9 @@ async function runImportCommand() {
 // must not block or nag the prompt it rides on.
 async function runContext() {
 	try {
+		// stdout errors arrive as async stream events the try/catch can't see —
+		// an unlistened EPIPE would crash non-zero and break the exit-0 contract.
+		process.stdout.on("error", () => {})
 		if (process.stdin.isTTY) return
 		const prompt = parseHookPrompt(await readStdin())
 		if (!prompt || shouldSkipPrompt(prompt)) return

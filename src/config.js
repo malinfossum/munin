@@ -70,7 +70,11 @@ export function normalizeSource(entry) {
 	if (typeof source.path !== "string" || source.path.length === 0) {
 		throw new Error('each source needs a "path"')
 	}
-	return { path: expandHome(source.path), weight: source.weight ?? 1 }
+	return {
+		path: expandHome(source.path),
+		weight: source.weight ?? 1,
+		imported: source.imported === true,
+	}
 }
 
 // Import sources are opt-in and weightless — imported chunks always rank
