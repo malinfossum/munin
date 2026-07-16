@@ -61,7 +61,10 @@ export function buildContextBlock(results) {
 			.split("\n")
 			.map((line) => `> ${line}`)
 			.join("\n")
-		return `[${i + 1}] ${chunk.file} § ${chunk.heading} (${chunk.date})\n${quoted}`
+		// file and heading are source-controlled text too — the boundary must
+		// be unforgeable through every interpolated field, not just the body.
+		const cite = escapeWrapperTags(`[${i + 1}] ${chunk.file} § ${chunk.heading} (${chunk.date})`)
+		return `${cite}\n${quoted}`
 	})
 	return `${PREAMBLE}\n\n${entries.join("\n\n")}\n</recalled-background>\n`
 }
