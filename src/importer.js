@@ -8,6 +8,8 @@ const SENTINEL = ".sentinel.json"
 // let injected chunks boost their own future ranking (spec M5: no
 // re-import feedback loop). An unclosed block strips to the end of the
 // turn — safer to drop too much than to re-index injected memory.
+// Case-sensitive on purpose: Munin only ever emits exact lowercase tags, and
+// escapeWrapperTags neutralizes any cased variant before it can reach a block.
 export function stripInjectedBlocks(text) {
 	return text
 		.replaceAll(/<recalled-background source="munin">[\s\S]*?(<\/recalled-background>|$)/g, "")

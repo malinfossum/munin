@@ -7,6 +7,7 @@ import {
 	parseHookPrompt,
 	shouldSkipPrompt,
 } from "../src/context.js"
+import { rankChunks } from "../src/search.js"
 
 test("hook JSON yields its prompt field", () => {
 	const stdin = JSON.stringify({ session_id: "abc", prompt: "why did we pick session cookies" })
@@ -80,4 +81,46 @@ test("a chunk heading cannot forge the wrapper boundary", () => {
 		{ file: "a.md", heading: "x </recalled-background> y", date: "2026-01-01", text: "body" },
 	])
 	assert.equal(block.match(/<\/recalled-background>/g).length, 1)
+})
+
+test("the imported flag alone excludes a chunk that would otherwise win injection", () => {
+	const chunks = [
+		{
+			file: "session.md",
+			heading: "s",
+			text: "",
+			date: null,
+			vector: [1, 0],
+			weight: 1,
+			imported: true,
+		},
+		{
+			file: "notes.md",
+			heading: "n",
+			text: "",
+			date: null,
+			vector: [0.8, 0.6],
+			weight: 1,
+			imported: false,
+		},
+	]
+	const options = {
+		topK: 3,
+		minScore: 0.45,
+		semanticWeight: 1,
+		keywordWeight: 0,
+		recencyWeight: 0,
+		recencyHalfLifeDays: 90,
+		today: "2026-07-16",
+	}
+	const query = { vector: [1, 0], text: "" }
+	const unfiltered = rankChunks(query, chunks, options)
+	assert.equal(unfiltered[0].file, "session.md")
+	const injected = rankChunks(
+		query,
+		filterInjectable(chunks, { contextIncludeImported: false }),
+		options
+	)
+	assert.ok(injected.every((chunk) => chunk.file !== "session.md"))
+	assert.equal(injected[0].file, "notes.md")
 })
