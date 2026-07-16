@@ -1,11 +1,11 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import {
-	parseHookPrompt,
-	shouldSkipPrompt,
 	buildContextBlock,
 	escapeWrapperTags,
 	filterInjectable,
+	parseHookPrompt,
+	shouldSkipPrompt,
 } from "../src/context.js"
 
 test("hook JSON yields its prompt field", () => {
