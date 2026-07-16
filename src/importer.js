@@ -4,6 +4,16 @@ import { scrubSecrets } from "./scrub.js"
 
 const SENTINEL = ".sentinel.json"
 
+// Huginn-mode injections land in transcripts; importing them back would
+// let injected chunks boost their own future ranking (spec M5: no
+// re-import feedback loop). An unclosed block strips to the end of the
+// turn — safer to drop too much than to re-index injected memory.
+export function stripInjectedBlocks(text) {
+	return text
+		.replaceAll(/<recalled-background source="munin">[\s\S]*?(<\/recalled-background>|$)/g, "")
+		.trim()
+}
+
 // Converts one Claude Code session transcript (JSONL) into dated markdown.
 // Only user text and assistant text blocks survive: thinking, tool calls,
 // tool results, images, sidechain (subagent) and meta lines are dropped
@@ -23,7 +33,7 @@ export function transcriptToMarkdown(jsonlText, { name }) {
 		}
 		if (entry.type !== "user" && entry.type !== "assistant") continue
 		if (entry.isSidechain === true || entry.isMeta === true) continue
-		const text = extractText(entry.message?.content)
+		const text = stripInjectedBlocks(extractText(entry.message?.content))
 		if (!text) continue
 		const date = String(entry.timestamp ?? "").slice(0, 10) || null
 		if (sessionDate === null && date) sessionDate = date
