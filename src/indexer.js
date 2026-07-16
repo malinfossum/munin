@@ -36,6 +36,9 @@ export async function buildIndex(config, embed) {
 			for (const chunk of chunkMarkdown(text, chunkMeta)) {
 				chunk.hash = hashChunk(chunk)
 				chunk.weight = source.weight
+				// Provenance travels with the chunk: Huginn mode (spec M5) must
+				// exclude imported text without guessing from paths or weights.
+				chunk.imported = source.imported === true
 				chunks.push(chunk)
 			}
 		}
@@ -54,6 +57,7 @@ export async function buildIndex(config, embed) {
 	}
 
 	const meta = {
+		schema: 2,
 		model: config.model,
 		modelRevision: config.modelRevision,
 		indexedAt: new Date().toISOString(),

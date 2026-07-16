@@ -34,7 +34,7 @@ export async function loadConfig() {
 	config.dataDir = path.join(projectRoot, "data")
 	config.importedDir = path.join(config.dataDir, "imported")
 	if (existsSync(config.importedDir)) {
-		config.sources.push({ path: config.importedDir, weight: config.importedWeight })
+		config.sources.push({ path: config.importedDir, weight: config.importedWeight, imported: true })
 	}
 	return config
 }
