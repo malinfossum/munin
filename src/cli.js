@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 import { loadConfig } from "./config.js"
+import {
+	buildContextBlock,
+	filterInjectable,
+	parseHookPrompt,
+	shouldSkipPrompt,
+} from "./context.js"
 import { createEmbedder } from "./embedder.js"
 import { runImport } from "./importer.js"
 import { buildIndex } from "./indexer.js"
@@ -15,6 +21,7 @@ try {
 	else if (command === "search") await runSearch(args)
 	else if (command === "status") await runStatus()
 	else if (command === "import") await runImportCommand()
+	else if (command === "context") await runContext()
 	else printUsage()
 } catch (error) {
 	console.error(`munin: ${error.message}`)
@@ -91,6 +98,47 @@ async function runImportCommand() {
 	console.log('Run "munin index" to make the imported sessions searchable.')
 }
 
+// Huginn mode (spec M5). Fail-safe means silent: always exit 0, never a
+// character of output on any failure, never a download — a broken index
+// must not block or nag the prompt it rides on.
+async function runContext() {
+	try {
+		// stdout errors arrive as async stream events the try/catch can't see —
+		// an unlistened EPIPE would crash non-zero and break the exit-0 contract.
+		process.stdout.on("error", () => {})
+		if (process.stdin.isTTY) return
+		const prompt = parseHookPrompt(await readStdin())
+		if (!prompt || shouldSkipPrompt(prompt)) return
+		const config = await loadConfig()
+		const index = await loadIndex(config.dataDir)
+		// schema 2 = imported provenance present; older indexes can't
+		// enforce curated-only, so they inject nothing until re-indexed.
+		if (index?.meta.schema !== 2) return
+		if (index.meta.model !== config.model || index.meta.modelRevision !== config.modelRevision)
+			return
+		const embed = await createEmbedder(config, { offlineOnly: true })
+		const [vector] = await embed([prompt])
+		const today = new Date().toISOString().slice(0, 10)
+		const results = rankChunks({ vector, text: prompt }, filterInjectable(index.chunks, config), {
+			...config,
+			topK: config.contextMaxChunks,
+			minScore: config.contextMinScore,
+			today,
+		})
+		if (results.length === 0) return
+		process.stdout.write(buildContextBlock(results))
+	} catch {
+		// any Munin error → no injection; the prompt proceeds untouched
+	}
+}
+
+async function readStdin() {
+	let data = ""
+	process.stdin.setEncoding("utf8")
+	for await (const piece of process.stdin) data += piece
+	return data
+}
+
 async function runStatus() {
 	const config = await loadConfig()
 	const index = await loadIndex(config.dataDir)
@@ -122,6 +170,9 @@ function printUsage() {
 	console.log("  munin status            show what the index contains")
 	console.log(
 		"  munin import            convert configured session transcripts into data/ (opt-in)"
+	)
+	console.log(
+		"  munin context           UserPromptSubmit hook endpoint (hook JSON on stdin; silent on failure)"
 	)
 	process.exitCode = command ? 1 : 0
 }

@@ -72,18 +72,46 @@ munin/
   weight (`importedWeight`, default 0.25), incremental sentinel written only after a fully
   successful run, third-party-words caveat documented in the README. Golden set stays 10/10
   with imports indexed.
-- **M5 — proactive recall ("Huginn mode").** A `UserPromptSubmit` hook runs
-  `munin context "<prompt>"` and silently injects the top matches as background context — so
-  brainstorming a new project automatically surfaces lessons from earlier ones. Guardrails:
-  high threshold, hard cap of ~3 chunks, skip prompts under ~15 words, injected chunks labeled
-  as recalled background data (not instructions). **Injects from curated sources only by
-  default** — M4-imported transcript text is never auto-injected unless explicitly enabled
-  (imported text is the memory-poisoning vector: third-party content silently steering future
-  sessions). The hook fails safe: any Munin error means no injection and the prompt proceeds
-  untouched — never block or delay the user on a broken index. Off by default; enabled per
-  project. Open question to resolve with measurement, not upfront: model load adds ~1–2 s per
-  prompt; accept it, or revisit the "no always-on process" non-goal with a lazy local daemon
-  only if it measurably hurts.
+- **M5 — proactive recall ("Huginn mode").** ✅ Shipped 2026-07-16 — gates green: tests
+  68/68, golden 10/10 (Q8 expectation updated to the decision's post-reorganize home,
+  `session-log.md`, per Malin), probes 8/8 on the default `contextMinScore` 0.45, median
+  `munin context` latency 0.803 s. A `UserPromptSubmit` hook runs `munin context`
+  and silently injects the top matches as background context — so brainstorming a new project
+  automatically surfaces lessons from earlier ones. Off by default; enabling = registering
+  the hook in the project's `.claude/settings.json` — hook presence is the toggle, no second
+  switch in `munin.config.json`. Requirements (spec stress-tested 2026-07-16):
+  - **Prompt transport.** The hook reads the UserPromptSubmit JSON from stdin and passes the
+    prompt to `munin context` via stdin, spawned without a shell — `node src/cli.js` directly,
+    never the npm `.cmd` shim (which forces `shell: true` on Windows). Raw prompt text never
+    enters a shell string; the M3 rule applies to the machine path too.
+  - **Injection wrapper — spec'd text, not an implementation detail.** The wrapper carries
+    the M3 retrieved-text-is-data preamble verbatim; chunk text is delimiter-escaped so a
+    chunk cannot forge the block boundary (the M4 heading-forgery lesson); it states that
+    injected background is private context, never to be quoted or paraphrased into public
+    artifacts (commits, PRs, READMEs); and it carries a sentinel marker (see re-import loop).
+  - **Curated sources only by default.** Chunks under `data/imported/` are flagged
+    `imported: true` at index time and `munin context` filters on that flag — weight is not
+    the discriminator. Imported transcript text is the memory-poisoning vector (third-party
+    content silently steering future sessions) and is never auto-injected unless explicitly
+    enabled in config.
+  - **No re-import feedback loop.** `munin import` strips sentinel-marked injection blocks
+    during conversion, so injected chunks never re-enter the index as session text and
+    boost their own future ranking.
+  - **Fail-safe means silent.** `munin context` always exits 0 and prints nothing — no
+    stdout, no stderr — on any failure (for UserPromptSubmit hooks, exit 2 blocks the prompt
+    and other non-zero codes nag the user). Cached model and existing index are
+    preconditions, not triggers: missing either → silent exit, never a model download. The
+    hook registers with an explicit ~5 s timeout so a hang can't ride the 60 s default —
+    never block or delay the user on a broken index.
+  - **Guardrails.** High threshold via a dedicated `contextMinScore`, hard cap of ~3 chunks,
+    skip prompts under ~15 whitespace-split words, skip slash-command prompts (`/…`).
+  - **Entry gate.** The golden set stays 10/10 (`munin search` gates every ranking change
+    and M5 must not disturb it), plus a probe set through the real `context` path:
+    should-inject prompts that must surface the right citation, and should-not-inject
+    prompts that must produce nothing (the Q10 honesty pattern extended to injection).
+  - Perf question resolved by measurement (2026-07-16): median end-to-end `munin context`
+    run is 0.803 s — accepted; the "no always-on process" non-goal stands and the lazy-daemon
+    idea stays closed unless real usage says otherwise.
 
 ## Security & release checklist (before publishing)
 

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict"
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises"
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
-import { findMarkdownFiles } from "../src/indexer.js"
+import { buildIndex, findMarkdownFiles } from "../src/indexer.js"
 
 async function makeTree() {
 	const dir = await mkdtemp(path.join(tmpdir(), "munin-walk-"))
@@ -47,4 +47,31 @@ test("links are reported as skipped, not followed", async (t) => {
 		skipped.map((entry) => path.relative(dir, entry)),
 		["linked"]
 	)
+})
+
+test("chunks carry imported provenance and the index reports schema 2", async (t) => {
+	const dir = await mkdtemp(path.join(tmpdir(), "munin-index-"))
+	t.after(() => rm(dir, { recursive: true, force: true }))
+	const curated = path.join(dir, "memory")
+	const imported = path.join(dir, "imported")
+	await mkdir(curated)
+	await mkdir(imported)
+	await writeFile(path.join(curated, "notes.md"), "# Notes\nfacts")
+	await writeFile(path.join(imported, "session.md"), "# Session\nchatter")
+	const config = {
+		model: "test-model",
+		modelRevision: "main",
+		dataDir: path.join(dir, "data"),
+		sources: [
+			{ path: curated, weight: 1 },
+			{ path: imported, weight: 0.25, imported: true },
+		],
+	}
+	const embed = async (texts) => texts.map(() => [1, 0])
+	await buildIndex(config, embed)
+	const index = JSON.parse(await readFile(path.join(dir, "data", "index.json"), "utf8"))
+	assert.equal(index.meta.schema, 2)
+	const byFile = Object.fromEntries(index.chunks.map((chunk) => [chunk.file, chunk.imported]))
+	assert.equal(byFile["notes.md"], false)
+	assert.equal(byFile["session.md"], true)
 })

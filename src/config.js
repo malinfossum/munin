@@ -31,10 +31,13 @@ export async function loadConfig() {
 	config.modelRevision = config.modelRevision ?? "main"
 	config.importSources = (config.importSources ?? []).map(normalizeImportSource)
 	config.importedWeight = config.importedWeight ?? 0.25
+	config.contextMinScore = config.contextMinScore ?? 0.45
+	config.contextMaxChunks = config.contextMaxChunks ?? 3
+	config.contextIncludeImported = config.contextIncludeImported === true
 	config.dataDir = path.join(projectRoot, "data")
 	config.importedDir = path.join(config.dataDir, "imported")
 	if (existsSync(config.importedDir)) {
-		config.sources.push({ path: config.importedDir, weight: config.importedWeight })
+		config.sources.push({ path: config.importedDir, weight: config.importedWeight, imported: true })
 	}
 	return config
 }
@@ -67,7 +70,11 @@ export function normalizeSource(entry) {
 	if (typeof source.path !== "string" || source.path.length === 0) {
 		throw new Error('each source needs a "path"')
 	}
-	return { path: expandHome(source.path), weight: source.weight ?? 1 }
+	return {
+		path: expandHome(source.path),
+		weight: source.weight ?? 1,
+		imported: source.imported === true,
+	}
 }
 
 // Import sources are opt-in and weightless — imported chunks always rank

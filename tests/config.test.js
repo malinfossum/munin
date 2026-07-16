@@ -21,3 +21,8 @@ test("importSources entries normalize like sources but carry no weight", () => {
 	assert.equal(normalizeImportSource({ path: "C:/transcripts" }).weight, undefined)
 	assert.throws(() => normalizeImportSource({}), /path/)
 })
+
+test("a source marked imported keeps its flag through normalization", () => {
+	assert.equal(normalizeSource({ path: "C:/transcripts", imported: true }).imported, true)
+	assert.equal(normalizeSource("C:/memory").imported, false)
+})
