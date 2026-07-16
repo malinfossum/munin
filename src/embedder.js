@@ -7,7 +7,10 @@ import path from "node:path"
 // is the one-time download allowed — after that, runs are fully offline
 // again. This keeps the spec's guarantee: the only network request Munin
 // ever makes is the model download.
-export async function createEmbedder({ model, modelRevision, dataDir }) {
+export async function createEmbedder(
+	{ model, modelRevision, dataDir },
+	{ offlineOnly = false } = {}
+) {
 	const { env, pipeline } = await import("@huggingface/transformers")
 	env.cacheDir = path.join(dataDir, "models")
 	env.allowRemoteModels = false
@@ -15,7 +18,11 @@ export async function createEmbedder({ model, modelRevision, dataDir }) {
 	let extractor
 	try {
 		extractor = await pipeline("feature-extraction", model, { revision: modelRevision })
-	} catch {
+	} catch (error) {
+		// The hook path (spec M5) must never trigger the one-time download:
+		// a cold cache means silent no-injection upstream, not a 30 MB fetch
+		// riding a prompt.
+		if (offlineOnly) throw error
 		console.warn(
 			"munin: model not in local cache — fetching the pinned revision (one-time download)"
 		)
