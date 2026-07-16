@@ -72,7 +72,10 @@ munin/
   weight (`importedWeight`, default 0.25), incremental sentinel written only after a fully
   successful run, third-party-words caveat documented in the README. Golden set stays 10/10
   with imports indexed.
-- **M5 — proactive recall ("Huginn mode").** A `UserPromptSubmit` hook runs `munin context`
+- **M5 — proactive recall ("Huginn mode").** ✅ Shipped 2026-07-16 — gates green: tests
+  68/68, golden 10/10 (Q8 expectation updated to the decision's post-reorganize home,
+  `session-log.md`, per Malin), probes 8/8 on the default `contextMinScore` 0.45, median
+  `munin context` latency 0.803 s. A `UserPromptSubmit` hook runs `munin context`
   and silently injects the top matches as background context — so brainstorming a new project
   automatically surfaces lessons from earlier ones. Off by default; enabling = registering
   the hook in the project's `.claude/settings.json` — hook presence is the toggle, no second
@@ -106,9 +109,9 @@ munin/
     and M5 must not disturb it), plus a probe set through the real `context` path:
     should-inject prompts that must surface the right citation, and should-not-inject
     prompts that must produce nothing (the Q10 honesty pattern extended to injection).
-  - Open question to resolve with measurement, not upfront: model load adds ~1–2 s per
-    prompt; accept it, or revisit the "no always-on process" non-goal with a lazy local
-    daemon only if it measurably hurts.
+  - Perf question resolved by measurement (2026-07-16): median end-to-end `munin context`
+    run is 0.803 s — accepted; the "no always-on process" non-goal stands and the lazy-daemon
+    idea stays closed unless real usage says otherwise.
 
 ## Security & release checklist (before publishing)
 
