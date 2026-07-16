@@ -44,6 +44,11 @@ set there overrides the committed config, so your personal paths never enter the
 - `importSources` — folders scanned by `munin import` for session transcripts (default `[]`,
   opt-in; see below).
 - `importedWeight` — source weight for imported sessions, the lowest in the index (default 0.25).
+- `contextMinScore` — confidence threshold for Huginn mode injection, higher than search's
+  `minScore` (default 0.45; see below).
+- `contextMaxChunks` — max chunks Huginn mode injects per prompt (default 3).
+- `contextIncludeImported` — opt-in to let imported transcript text be injected by Huginn mode
+  (default `false`; see below).
 
 ## Usage
 
@@ -84,6 +89,71 @@ anything is written (long opaque tokens like git SHAs are scrubbed too, by desig
 Re-runs are incremental; the import ledger is written only after a fully successful run.
 Note: transcripts contain other people's words too (collaborators, quoted web content) —
 imported text stays in gitignored `data/` and ranks below your curated memory.
+
+## Huginn mode (proactive recall)
+
+A `UserPromptSubmit` hook can pipe every prompt you type to `munin context`, which searches
+the index and — only on a confident match — injects up to 3 chunks as labeled background
+context before the prompt reaches Claude. No lookup, no citations to type by hand.
+
+### Off by default
+
+There's no switch in `munin.config.json`. Enabling Huginn mode means registering the hook in
+a project's `.claude/settings.json` — hook presence is the toggle:
+
+```json
+{
+	"hooks": {
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node C:\\path\\to\\munin\\src\\cli.js context",
+						"timeout": 5
+					}
+				]
+			}
+		]
+	}
+}
+```
+
+Invoke `node …\src\cli.js` directly — never the npm `.cmd` shim, which forces a shell on
+Windows, exactly what raw prompt text must never touch. Keep the explicit `timeout` so a hang
+can never ride the default 60 s.
+
+### Curated sources only
+
+Imported transcript text (see above) never auto-injects. That's enforced twice: an explicit
+`imported` flag set on the chunk at index time excludes it from injection regardless of
+weight, and — belt and braces — imported chunks also carry the lowest source weight by
+default, well below the injection threshold. Set `"contextIncludeImported": true` in
+`munin.config.json` to opt in explicitly; it's off by default because third-party words (a
+collaborator's message, quoted web content) shouldn't silently steer a future session.
+
+### Fail-safe by design
+
+`munin context` always exits 0 and prints nothing on any failure — a missing index, a cold
+model cache, a config error, or a pre-M5 index that predates provenance tracking. It never
+downloads the model and never blocks or delays the prompt: worst case, Huginn mode stays
+silent and the prompt goes through untouched, same as if the hook weren't registered at all.
+Measured with a warm model and index, median added latency was 0.803 s per prompt.
+
+### Privacy
+
+Registering the hook makes the configured memory folders ambient in that project's
+sessions — recalled text can surface on any prompt. The injected block itself instructs that
+recalled text is private context: never to be quoted or paraphrased into public artifacts
+(commits, PRs, READMEs).
+
+### Tunables
+
+- `contextMinScore` — confidence threshold for injection, higher than search's `minScore`
+  (default 0.45).
+- `contextMaxChunks` — max chunks injected per prompt (default 3).
+- Prompts under ~15 words and slash commands (`/…`) are always skipped — too little signal to
+  search on.
 
 ## Privacy
 
