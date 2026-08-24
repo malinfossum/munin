@@ -160,6 +160,77 @@ test("every curated hit outranks every imported hit", () => {
 	)
 })
 
+const slotOptions = { ...options, topK: 3, minScore: 0.3, importedMinScore: 0.5 }
+const curatedChunk = (heading) => ({ heading, vector: [1, 0], text: "", weight: 1 })
+const importedChunk = (heading) => ({
+	heading,
+	vector: [1, 0],
+	text: "",
+	weight: 0.25,
+	imported: true,
+})
+const mixed = [
+	curatedChunk("c1"),
+	curatedChunk("c2"),
+	curatedChunk("c3"),
+	curatedChunk("c4"),
+	importedChunk("i1"),
+	importedChunk("i2"),
+	importedChunk("i3"),
+]
+
+// Weight-for-ordering alone left imported content unreachable: curated hits
+// filled every topK slot. importedTopK adds slots rather than taking them,
+// so curated recall is never traded away for transcript text.
+test("imported hits take reserved slots after the curated ones", () => {
+	const results = rankChunks({ vector: [1, 0], text: "" }, mixed, {
+		...slotOptions,
+		importedTopK: 2,
+	})
+	assert.deepEqual(
+		results.map((result) => result.heading),
+		["c1", "c2", "c3", "i1", "i2"]
+	)
+})
+
+test("reserved slots are extra, never taken from the curated ones", () => {
+	const withSlots = rankChunks({ vector: [1, 0], text: "" }, mixed, {
+		...slotOptions,
+		importedTopK: 2,
+	})
+	const withoutSlots = rankChunks({ vector: [1, 0], text: "" }, mixed, slotOptions)
+	assert.deepEqual(
+		withSlots.filter((result) => result.imported !== true),
+		withoutSlots
+	)
+})
+
+// Proactive recall's hard chunk cap is spec'd (M5), so the context path
+// passes importedTopK 0 and must get exactly topK back.
+test("importedTopK 0 leaves the result set untouched", () => {
+	const results = rankChunks({ vector: [1, 0], text: "" }, mixed, {
+		...slotOptions,
+		importedTopK: 0,
+	})
+	assert.equal(results.length, 3)
+	assert.equal(
+		results.some((result) => result.imported === true),
+		false
+	)
+})
+
+test("an imported hit below its gate never takes a reserved slot", () => {
+	const weak = [curatedChunk("c1"), { ...importedChunk("i1"), vector: [0.6, 0.8] }]
+	const results = rankChunks({ vector: [1, 0], text: "" }, weak, {
+		...slotOptions,
+		importedTopK: 2,
+	})
+	assert.deepEqual(
+		results.map((result) => result.heading),
+		["c1"]
+	)
+})
+
 test("stem collapses inflected forms to a shared stem", () => {
 	assert.equal(stem("injecting"), "inject")
 	assert.equal(stem("injected"), "inject")
