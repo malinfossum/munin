@@ -1,4 +1,4 @@
-// Pure logic for Huginn mode (spec M5): decide when to inject and build
+// Pure logic for proactive recall (spec M5): decide when to inject and build
 // the labeled background block. The CLI wiring stays in cli.js.
 
 const MIN_PROMPT_WORDS = 15

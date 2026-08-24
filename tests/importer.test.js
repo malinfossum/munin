@@ -104,7 +104,7 @@ test("the same relative path in two sources produces two outputs", async () => {
 	assert.ok(texts.some((text) => text.includes("fact from source b")))
 })
 
-test("Huginn-injected blocks are stripped so recall can't feed on itself", () => {
+test("proactive-recall-injected blocks are stripped so recall can't feed on itself", () => {
 	const turn = [
 		"before the block",
 		'<recalled-background source="munin">',

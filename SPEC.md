@@ -72,7 +72,7 @@ munin/
   weight (`importedWeight`, default 0.25), incremental sentinel written only after a fully
   successful run, third-party-words caveat documented in the README. Golden set stays 10/10
   with imports indexed.
-- **M5 — proactive recall ("Huginn mode").** ✅ Shipped 2026-07-16 — gates green: tests
+- **M5 — proactive recall.** ✅ Shipped 2026-07-16 — gates green: tests
   68/68, golden 10/10 (Q8 expectation updated to the decision's post-reorganize home,
   `session-log.md`, per Malin), probes 8/8 on the default `contextMinScore` 0.45, median
   `munin context` latency 0.803 s. A `UserPromptSubmit` hook runs `munin context`

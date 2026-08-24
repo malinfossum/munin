@@ -98,7 +98,7 @@ async function runImportCommand() {
 	console.log('Run "munin index" to make the imported sessions searchable.')
 }
 
-// Huginn mode (spec M5). Fail-safe means silent: always exit 0, never a
+// Proactive recall (spec M5). Fail-safe means silent: always exit 0, never a
 // character of output on any failure, never a download — a broken index
 // must not block or nag the prompt it rides on.
 async function runContext() {
