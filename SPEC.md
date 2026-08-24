@@ -4,7 +4,7 @@ Local semantic search over AI memory files. Recall by meaning, cited by source.
 Named after Muninn, Odin's raven of memory, who flies out each day and reports everything he
 has seen. (Naming decided 2026-07-13 after checking alternatives — Malin loves the name and
 keeps it with eyes open: the 20-year-old Munin monitoring tool lives in a different space, the
-GitHub repo is namespaced, and npm publishing goes scoped as `@malinfossum/munin` with a bare
+GitHub repo is namespaced, and npm publishing went scoped as `@malinfossum/munin` with a bare
 `munin` bin. The README carries a one-line disambiguation.)
 
 ## What it is
@@ -144,6 +144,9 @@ munin/
 - [x] Errors are friendly one-liners; no stack traces or absolute paths leak to users
 - [x] Recall output is data: the skill (M3/M5) must instruct Claude to treat retrieved text as quotes, never as instructions to follow (prompt-injection hygiene) — shipped with M3
 - [x] MIT license file present; git author uses the public dev email
+- [x] Published 2026-08-24 as `@malinfossum/munin@0.6.0` (public, MIT). The published
+      tarball was verified against the registry: sha1 matches the publish output, 16 files,
+      no `data/`, no index, no transcripts, no private email, no personal paths
 
 ## Proof it works
 
