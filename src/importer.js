@@ -4,7 +4,7 @@ import { scrubSecrets } from "./scrub.js"
 
 const SENTINEL = ".sentinel.json"
 
-// Huginn-mode injections land in transcripts; importing them back would
+// Proactive-recall injections land in transcripts; importing them back would
 // let injected chunks boost their own future ranking (spec M5: no
 // re-import feedback loop). An unclosed block strips to the end of the
 // turn — safer to drop too much than to re-index injected memory.

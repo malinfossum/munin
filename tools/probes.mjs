@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Runs the Huginn-mode probes through the real CLI. Probes live in
+// Runs the proactive-recall probes through the real CLI. Probes live in
 // data/context-probes.json (gitignored — they quote private memory).
 // Probes with "expect" must surface that citation in the injected block;
 // probes without it must inject nothing — the Q10 honesty pattern
