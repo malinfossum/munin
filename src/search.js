@@ -13,6 +13,13 @@
 // golden set, where the honesty probe pulled an unrelated transcript up
 // to 0.42. Never below minScore: a stricter caller must not accidentally
 // loosen the imported gate.
+//
+// Ranking imported text down was not enough to make it reachable: with
+// far more curated chunks than slots, curated hits filled every one of
+// them. importedTopK appends up to N imported hits *after* the topK
+// list rather than competing for it, so curated recall is never traded
+// away. 0 keeps the old behaviour exactly — proactive recall's spec'd
+// chunk cap depends on that.
 export function rankChunks(query, chunks, options) {
 	const {
 		topK,
@@ -22,6 +29,7 @@ export function rankChunks(query, chunks, options) {
 		recencyWeight,
 		recencyHalfLifeDays,
 		importedMinScore,
+		importedTopK,
 		today,
 	} = options
 	const importedGate = Math.max(minScore, importedMinScore ?? minScore)
@@ -31,7 +39,7 @@ export function rankChunks(query, chunks, options) {
 	)
 	const idf = inverseDocumentFrequency(terms, chunkTerms)
 
-	return chunks
+	const ranked = chunks
 		.map((chunk, i) => {
 			const semantic = dot(query.vector, chunk.vector)
 			const keyword = keywordScore(terms, idf, chunkTerms[i])
@@ -43,7 +51,13 @@ export function rankChunks(query, chunks, options) {
 		})
 		.filter((chunk) => chunk.relevance >= (chunk.imported === true ? importedGate : minScore))
 		.sort((a, b) => b.score - a.score)
-		.slice(0, topK)
+
+	const top = ranked.slice(0, topK)
+	if (!importedTopK) return top
+	const reserved = ranked
+		.filter((chunk) => chunk.imported === true && !top.includes(chunk))
+		.slice(0, importedTopK)
+	return [...top, ...reserved]
 }
 
 // Lowercase unicode word tokens, deduplicated. Keeps letters, digits and

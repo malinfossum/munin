@@ -120,9 +120,11 @@ munin/
   unweighted relevance, the weight orders what survives. Imported chunks additionally clear
   a higher `importedMinScore` (default 0.5, never below `minScore`), because transcript
   prose matches loosely — without it the golden set's Q10 honesty probe pulled an unrelated
-  transcript to 0.42 and answered a question the notes cannot answer. Known limit: because
-  every curated hit that clears the gate outranks every imported one, imported chunks reach
-  the top `topK` only when curated memory is thin.
+  transcript to 0.42 and answered a question the notes cannot answer. Ordering alone was not
+  enough to make imported text reachable — measured on the golden set, curated hits filled
+  all five slots on every question — so `importedTopK` (default 2) appends imported results
+  after the `topK` curated ones rather than competing for them. Proactive recall passes
+  `importedTopK` 0: its chunk cap is a spec'd guardrail.
 
 ## Security & release checklist (before publishing)
 

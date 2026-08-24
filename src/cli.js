@@ -123,6 +123,9 @@ async function runContext() {
 			...config,
 			topK: config.contextMaxChunks,
 			minScore: config.contextMinScore,
+			// contextMaxChunks is a hard cap (spec M5), so injection takes no
+			// reserved imported slots on top of it.
+			importedTopK: 0,
 			today,
 		})
 		if (results.length === 0) return

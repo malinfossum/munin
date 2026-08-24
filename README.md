@@ -50,6 +50,8 @@ set there overrides the committed config, so your personal paths never enter the
 - `importedWeight` — source weight for imported sessions, the lowest in the index (default 0.25).
 - `importedMinScore` — the confidence bar imported chunks must clear, above the curated
   `minScore` because transcript prose matches loosely (default 0.5; never below `minScore`).
+- `importedTopK` — extra result slots for imported chunks, appended after the `topK`
+  curated hits (default 2). Set to 0 to leave imported content out of results entirely.
 - `contextMinScore` — confidence threshold for proactive-recall injection, higher than search's
   `minScore` (default 0.45; see below).
 - `contextMaxChunks` — max chunks proactive recall injects per prompt (default 3).
@@ -98,8 +100,9 @@ imported text stays in gitignored `data/` and ranks below your curated memory.
 
 Weight ranks imported text down; it no longer hides it. `minScore` is judged on the
 unweighted relevance, so a strong imported match survives the gate and then sorts below
-every curated hit that also cleared it — in practice imported chunks surface only when
-curated memory has little to say. Imported text must clear the higher `importedMinScore`
+every curated hit that also cleared it. Sorting alone still left it unreachable — curated
+hits fill every slot — so up to `importedTopK` imported results are appended after the
+curated ones instead of competing with them. Imported text must clear the higher `importedMinScore`
 to appear at all, which is what keeps a question your notes cannot answer answered with
 "No confident match." rather than with transcript chatter.
 
