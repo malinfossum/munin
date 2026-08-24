@@ -29,6 +29,20 @@ Point `munin.config.json` at your memory folders (defaults to `~/.claude/memory`
 machine-specific folders, create `munin.config.local.json` next to it (gitignored) — any field
 set there overrides the committed config, so your personal paths never enter the repo.
 
+### Where your config and index live
+
+In a git checkout — that is, whenever `munin.config.local.json` sits next to
+`munin.config.json` — your override and the index stay in the repo, under `data/`. Working on
+Munin therefore never touches an installed copy's index.
+
+Installed as a package, both move out of the package directory, because `npm update` replaces
+its contents and would otherwise destroy an index that takes minutes to rebuild:
+
+| | Windows | macOS / Linux |
+|---|---|---|
+| Your config (`munin.config.json`) | `%APPDATA%\munin` | `$XDG_CONFIG_HOME/munin`, else `~/.config/munin` |
+| Index and imported text | `%LOCALAPPDATA%\munin` | `$XDG_DATA_HOME/munin`, else `~/.local/share/munin` |
+
 ### Config options
 
 - `sources` — array of folders to index. Each entry is either `"~/path"` or

@@ -6,12 +6,35 @@ import { fileURLToPath } from "node:url"
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url))
 
-// munin.config.json is the committed default; munin.config.local.json
-// (gitignored) overrides any field for machine-specific folders.
+// Where a user's own config and index live once Munin is installed as a
+// package. They must not sit inside the package directory: npm update
+// replaces its contents, which would wipe an index that takes minutes to
+// build. Platform arguments are injected so the rules stay testable.
+export function userConfigDir(env = process.env, platform = process.platform, home = homedir()) {
+	if (platform === "win32" && env.APPDATA) return path.join(env.APPDATA, "munin")
+	if (env.XDG_CONFIG_HOME) return path.join(env.XDG_CONFIG_HOME, "munin")
+	return path.join(home, ".config", "munin")
+}
+
+export function userDataDir(env = process.env, platform = process.platform, home = homedir()) {
+	if (platform === "win32" && env.LOCALAPPDATA) return path.join(env.LOCALAPPDATA, "munin")
+	if (env.XDG_DATA_HOME) return path.join(env.XDG_DATA_HOME, "munin")
+	return path.join(home, ".local", "share", "munin")
+}
+
+// munin.config.json is the committed default. The override is
+// munin.config.local.json next to it in a git checkout, or
+// munin.config.json in the user config dir for an installed copy — and
+// the presence of the checkout file is what picks between them, so
+// working on Munin never reads or writes the installed copy's index.
 export async function loadConfig() {
-	const base = await readConfigFile("munin.config.json")
+	const base = await readConfigFile(path.join(projectRoot, "munin.config.json"))
 	if (!base) throw new Error("munin.config.json not found in the project root")
-	const local = await readConfigFile("munin.config.local.json")
+	const checkoutLocal = path.join(projectRoot, "munin.config.local.json")
+	const isCheckout = existsSync(checkoutLocal)
+	const local = isCheckout
+		? await readConfigFile(checkoutLocal)
+		: await readConfigFile(path.join(userConfigDir(), "munin.config.json"))
 	const config = { ...base, ...local }
 
 	if (!Array.isArray(config.sources) || config.sources.length === 0) {
@@ -36,7 +59,7 @@ export async function loadConfig() {
 	config.importedMinScore = config.importedMinScore ?? 0.5
 	config.importedTopK = config.importedTopK ?? 2
 	config.contextIncludeImported = config.contextIncludeImported === true
-	config.dataDir = path.join(projectRoot, "data")
+	config.dataDir = isCheckout ? path.join(projectRoot, "data") : userDataDir()
 	config.importedDir = path.join(config.dataDir, "imported")
 	if (existsSync(config.importedDir)) {
 		config.sources.push({ path: config.importedDir, weight: config.importedWeight, imported: true })
@@ -44,17 +67,17 @@ export async function loadConfig() {
 	return config
 }
 
-async function readConfigFile(name) {
+async function readConfigFile(filePath) {
 	let raw
 	try {
-		raw = await readFile(path.join(projectRoot, name), "utf8")
+		raw = await readFile(filePath, "utf8")
 	} catch {
 		return null
 	}
 	try {
 		return JSON.parse(raw)
 	} catch {
-		throw new Error(`${name} is not valid JSON`)
+		throw new Error(`${path.basename(filePath)} is not valid JSON`)
 	}
 }
 
