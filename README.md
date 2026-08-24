@@ -33,6 +33,10 @@ set there overrides the committed config, so your personal paths never enter the
 
 - `sources` — array of folders to index. Each entry is either `"~/path"` or
   `{ "path": "~/path", "weight": 0.5 }`; lower-weight sources rank below curated memory. Changes to a source's weight take effect after the next `munin index` run.
+  An entry may also name a single `.md` file, which is how you index a project's own
+  docs without pulling in the rest of its repo — pointing a source at a repo root would
+  sweep up build output, `node_modules`, and any imported transcripts sitting under it.
+  A source folder that is itself a link is followed; links found *inside* one are not.
 - `topK` — max results returned (default 5).
 - `minScore` — confidence threshold below which Munin says "No confident match." (default 0.3).
 - `semanticWeight` — weight of cosine similarity in the final ranking (default 0.7).
