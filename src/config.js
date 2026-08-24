@@ -33,6 +33,7 @@ export async function loadConfig() {
 	config.importedWeight = config.importedWeight ?? 0.25
 	config.contextMinScore = config.contextMinScore ?? 0.45
 	config.contextMaxChunks = config.contextMaxChunks ?? 3
+	config.importedMinScore = config.importedMinScore ?? 0.5
 	config.contextIncludeImported = config.contextIncludeImported === true
 	config.dataDir = path.join(projectRoot, "data")
 	config.importedDir = path.join(config.dataDir, "imported")

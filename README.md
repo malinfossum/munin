@@ -44,6 +44,8 @@ set there overrides the committed config, so your personal paths never enter the
 - `importSources` — folders scanned by `munin import` for session transcripts (default `[]`,
   opt-in; see below).
 - `importedWeight` — source weight for imported sessions, the lowest in the index (default 0.25).
+- `importedMinScore` — the confidence bar imported chunks must clear, above the curated
+  `minScore` because transcript prose matches loosely (default 0.5; never below `minScore`).
 - `contextMinScore` — confidence threshold for proactive-recall injection, higher than search's
   `minScore` (default 0.45; see below).
 - `contextMaxChunks` — max chunks proactive recall injects per prompt (default 3).
@@ -89,6 +91,13 @@ anything is written (long opaque tokens like git SHAs are scrubbed too, by desig
 Re-runs are incremental; the import ledger is written only after a fully successful run.
 Note: transcripts contain other people's words too (collaborators, quoted web content) —
 imported text stays in gitignored `data/` and ranks below your curated memory.
+
+Weight ranks imported text down; it no longer hides it. `minScore` is judged on the
+unweighted relevance, so a strong imported match survives the gate and then sorts below
+every curated hit that also cleared it — in practice imported chunks surface only when
+curated memory has little to say. Imported text must clear the higher `importedMinScore`
+to appear at all, which is what keeps a question your notes cannot answer answered with
+"No confident match." rather than with transcript chatter.
 
 ## Proactive recall
 
