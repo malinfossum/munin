@@ -94,6 +94,72 @@ test("source weight multiplies the final score", () => {
 	assert.equal(results[0].heading, "curated")
 })
 
+test("weight orders results but never gates them", () => {
+	const chunks = [{ heading: "imported", vector: [1, 0], text: "", weight: 0.25 }]
+	const results = rankChunks({ vector: [1, 0], text: "" }, chunks, {
+		...options,
+		minScore: 0.3,
+	})
+	assert.equal(results.length, 1, "a strong match must survive its own low weight")
+})
+
+test("minScore still gates a weak match at full weight", () => {
+	const chunks = [{ heading: "weak", vector: [0.3, 0.954], text: "", weight: 1 }]
+	const results = rankChunks({ vector: [1, 0], text: "" }, chunks, {
+		...options,
+		minScore: 0.3,
+	})
+	assert.equal(results.length, 0)
+})
+
+// Imported prose matches loosely, so it must clear importedMinScore —
+// otherwise transcript chatter answers questions it has no answer to.
+test("imported chunks clear a higher bar than curated ones", () => {
+	const chunks = [
+		{ heading: "imported", vector: [0.6, 0.8], text: "", weight: 0.25, imported: true },
+		{ heading: "curated", vector: [0.6, 0.8], text: "", weight: 1 },
+	]
+	const results = rankChunks({ vector: [1, 0], text: "" }, chunks, {
+		...options,
+		minScore: 0.3,
+		importedMinScore: 0.5,
+	})
+	assert.deepEqual(
+		results.map((result) => result.heading),
+		["curated"]
+	)
+})
+
+test("a stricter minScore is never loosened for imported chunks", () => {
+	const chunks = [
+		{ heading: "imported", vector: [0.8, 0.6], text: "", weight: 0.25, imported: true },
+	]
+	const results = rankChunks({ vector: [1, 0], text: "" }, chunks, {
+		...options,
+		minScore: 0.6,
+		importedMinScore: 0.5,
+	})
+	assert.equal(results.length, 0, "importedMinScore must not undercut minScore")
+})
+
+// The rank-down guarantee: because the heaviest imported chunk (0.25 x
+// 1.05) still scores below any curated chunk that clears the gate,
+// imported text can fill leftover slots but never displace curated memory.
+test("every curated hit outranks every imported hit", () => {
+	const chunks = [
+		{ heading: "imported-perfect", vector: [1, 0], text: "", weight: 0.25 },
+		{ heading: "curated-mediocre", vector: [0.6, 0.8], text: "", weight: 1 },
+	]
+	const results = rankChunks({ vector: [1, 0], text: "" }, chunks, {
+		...options,
+		minScore: 0.3,
+	})
+	assert.deepEqual(
+		results.map((result) => result.heading),
+		["curated-mediocre", "imported-perfect"]
+	)
+})
+
 test("stem collapses inflected forms to a shared stem", () => {
 	assert.equal(stem("injecting"), "inject")
 	assert.equal(stem("injected"), "inject")

@@ -113,6 +113,17 @@ munin/
     run is 0.803 s — accepted; the "no always-on process" non-goal stands and the lazy-daemon
     idea stays closed unless real usage says otherwise.
 
+- **Post-M5 — imported content is ranked down, not muted.** Latent M4 finding: the source
+  weight multiplied the score *before* the `minScore` gate, so an imported chunk (weight
+  0.25) capped at 0.26 and could never reach `minScore` 0.3 — the weight muted the source
+  instead of ranking it down. Fixed by separating the two questions: `minScore` gates the
+  unweighted relevance, the weight orders what survives. Imported chunks additionally clear
+  a higher `importedMinScore` (default 0.5, never below `minScore`), because transcript
+  prose matches loosely — without it the golden set's Q10 honesty probe pulled an unrelated
+  transcript to 0.42 and answered a question the notes cannot answer. Known limit: because
+  every curated hit that clears the gate outranks every imported one, imported chunks reach
+  the top `topK` only when curated memory is thin.
+
 ## Security & release checklist (before publishing)
 
 - [x] `data/` gitignored from first commit — the index contains raw private memory text

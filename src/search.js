@@ -1,6 +1,18 @@
 // Hybrid ranking: cosine similarity + IDF-weighted keyword overlap,
 // plus a recency boost from the chunk date and a per-source weight.
 // Pure module — the caller supplies today's date.
+//
+// Confidence and precedence are separate questions. minScore gates on the
+// unweighted score — does this chunk actually answer the query — while the
+// source weight only orders what survives. Multiplying before the gate
+// muted low-weight sources outright: an imported chunk (weight 0.25) could
+// not reach minScore 0.3 even on a perfect match. Rank-down, not mute.
+//
+// Imported transcript prose is chattier than curated memory and matches
+// loosely, so it clears a higher bar (importedMinScore) — measured on the
+// golden set, where the honesty probe pulled an unrelated transcript up
+// to 0.42. Never below minScore: a stricter caller must not accidentally
+// loosen the imported gate.
 export function rankChunks(query, chunks, options) {
 	const {
 		topK,
@@ -9,8 +21,10 @@ export function rankChunks(query, chunks, options) {
 		keywordWeight,
 		recencyWeight,
 		recencyHalfLifeDays,
+		importedMinScore,
 		today,
 	} = options
+	const importedGate = Math.max(minScore, importedMinScore ?? minScore)
 	const terms = [...new Set(tokenize(query.text).map(stem))]
 	const chunkTerms = chunks.map(
 		(chunk) => new Set(tokenize(`${chunk.heading} ${chunk.text}`).map(stem))
@@ -22,12 +36,12 @@ export function rankChunks(query, chunks, options) {
 			const semantic = dot(query.vector, chunk.vector)
 			const keyword = keywordScore(terms, idf, chunkTerms[i])
 			const recency = recencyBoost(chunk.date, today, recencyHalfLifeDays)
-			const score =
-				(semanticWeight * semantic + keywordWeight * keyword + recencyWeight * recency) *
-				(chunk.weight ?? 1)
-			return { ...chunk, score, semantic, keyword }
+			const relevance =
+				semanticWeight * semantic + keywordWeight * keyword + recencyWeight * recency
+			const score = relevance * (chunk.weight ?? 1)
+			return { ...chunk, score, relevance, semantic, keyword }
 		})
-		.filter((chunk) => chunk.score >= minScore)
+		.filter((chunk) => chunk.relevance >= (chunk.imported === true ? importedGate : minScore))
 		.sort((a, b) => b.score - a.score)
 		.slice(0, topK)
 }
