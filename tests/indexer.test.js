@@ -27,6 +27,63 @@ test("finds markdown recursively, ignores dotfiles and non-markdown", async (t) 
 	assert.deepEqual(skipped, [])
 })
 
+// A source may name one markdown file, not just a folder: pointing at a
+// repo root would drag in data/ and node_modules, and re-index imported
+// transcripts as curated — the exact provenance mix-up M5 guards against.
+test("a single markdown file works as a source", async (t) => {
+	const dir = await makeTree()
+	t.after(() => rm(dir, { recursive: true, force: true }))
+
+	const { files, skipped } = await findMarkdownFiles(path.join(dir, "top.md"))
+	assert.deepEqual(files, [path.join(dir, "top.md")])
+	assert.deepEqual(skipped, [])
+})
+
+// ~/.claude/memory is a junction, so a source root that is itself a link
+// must still be walked — only links found inside a source are skipped.
+test("a linked source root is still walked", async (t) => {
+	const dir = await makeTree()
+	t.after(() => rm(dir, { recursive: true, force: true }))
+	const link = path.join(path.dirname(dir), `${path.basename(dir)}-link`)
+	try {
+		await symlink(dir, link, "junction")
+	} catch {
+		t.skip("cannot create links in this environment")
+		return
+	}
+	t.after(() => rm(link, { recursive: true, force: true }))
+
+	const { files } = await findMarkdownFiles(link)
+	assert.equal(files.length, 2)
+})
+
+test("a non-markdown file as a source contributes nothing", async (t) => {
+	const dir = await makeTree()
+	t.after(() => rm(dir, { recursive: true, force: true }))
+
+	const { files } = await findMarkdownFiles(path.join(dir, "ignore.txt"))
+	assert.deepEqual(files, [])
+})
+
+test("a file source names its chunks by basename", async (t) => {
+	const dir = await mkdtemp(path.join(tmpdir(), "munin-file-source-"))
+	t.after(() => rm(dir, { recursive: true, force: true }))
+	const doc = path.join(dir, "SPEC.md")
+	await writeFile(doc, "# Spec\nthe rules")
+	const config = {
+		model: "test-model",
+		modelRevision: "main",
+		dataDir: path.join(dir, "data"),
+		sources: [{ path: doc, weight: 1 }],
+	}
+	await buildIndex(config, async (texts) => texts.map(() => [1, 0]))
+	const index = JSON.parse(await readFile(path.join(dir, "data", "index.json"), "utf8"))
+	assert.deepEqual(
+		index.chunks.map((chunk) => chunk.file),
+		["SPEC.md"]
+	)
+})
+
 test("links are reported as skipped, not followed", async (t) => {
 	const dir = await makeTree()
 	t.after(() => rm(dir, { recursive: true, force: true }))
