@@ -130,7 +130,9 @@ munin/
 
 - [x] `data/` gitignored from first commit — the index contains raw private memory text
 - [x] Repo history contains no personal paths, no private email, no memory content
-- [x] Read-only guarantee documented and true: no code path writes outside `data/`
+- [x] Read-only guarantee documented and true: no code path writes outside its own data
+      directory — `data/` in a git checkout, the user data dir (`%LOCALAPPDATA%\munin`,
+      `$XDG_DATA_HOME/munin`) for an installed copy. Sources are only ever read.
 - [x] No network calls at runtime except the model download; documented, model name pinned in config
 - [x] Offline mode is enforced, not assumed: once the model is cached, remote lookups are
       disabled (`env.allowRemoteModels = false`) so "fully offline after download" is a
