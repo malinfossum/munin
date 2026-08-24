@@ -1,10 +1,38 @@
 {
 	"name": "@malinfossum/munin",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"description": "Local semantic search over your AI memory files — recall by meaning, cited by source.",
+	"keywords": [
+		"semantic-search",
+		"memory",
+		"embeddings",
+		"local-first",
+		"offline",
+		"cli",
+		"claude-code"
+	],
+	"homepage": "https://github.com/malinfossum/munin#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/malinfossum/munin.git"
+	},
+	"bugs": {
+		"url": "https://github.com/malinfossum/munin/issues"
+	},
 	"type": "module",
 	"bin": {
 		"munin": "src/cli.js"
+	},
+	"files": [
+		"src",
+		"skills",
+		"munin.config.json",
+		"README.md",
+		"SPEC.md",
+		"LICENSE"
+	],
+	"publishConfig": {
+		"access": "public"
 	},
 	"scripts": {
 		"test": "node --test"
