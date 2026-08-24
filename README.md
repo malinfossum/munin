@@ -11,6 +11,8 @@ to report everything he has seen.
 > Not related to the [Munin monitoring tool](https://github.com/munin-monitoring/munin) —
 > this raven only watches your memory files.
 
+On npm as [`@malinfossum/munin`](https://www.npmjs.com/package/@malinfossum/munin).
+
 ## Stack
 
 Node (ESM), one dependency: `@huggingface/transformers` for local embeddings. No server, no API
