@@ -21,13 +21,25 @@ offline.
 ## Setup
 
 ```
+npm install -g @malinfossum/munin
+munin index
+```
+
+The first index run downloads the embedding model (~30 MB) once; after that Munin is fully
+offline. Working on Munin itself instead? Clone the repo and use `node src/cli.js` in place of
+`munin` — the two are the same entry point:
+
+```
+git clone https://github.com/malinfossum/munin.git
+cd munin
 npm install
 node src/cli.js index
 ```
 
-Point `munin.config.json` at your memory folders (defaults to `~/.claude/memory`). For
-machine-specific folders, create `munin.config.local.json` next to it (gitignored) — any field
-set there overrides the committed config, so your personal paths never enter the repo.
+Point Munin at your memory folders. The shipped `munin.config.json` defaults to
+`~/.claude/memory`; to change it, put your own `munin.config.json` in the config directory
+below. In a checkout, create `munin.config.local.json` next to the committed one instead
+(gitignored) — either way your personal paths never enter the repo.
 
 ### Where your config and index live
 
@@ -75,8 +87,8 @@ its contents and would otherwise destroy an index that takes minutes to rebuild:
 ## Usage
 
 ```
-node src/cli.js search "how do we keep users logged in"
-node src/cli.js status
+munin search "how do we keep users logged in"
+munin status
 ```
 
 Results are ranked by a hybrid of meaning, keywords, and recency. Keyword terms are lightly
@@ -149,9 +161,12 @@ a project's `.claude/settings.json` — hook presence is the toggle:
 }
 ```
 
-Invoke `node …\src\cli.js` directly — never the npm `.cmd` shim, which forces a shell on
-Windows, exactly what raw prompt text must never touch. Keep the explicit `timeout` so a hang
-can never ride the default 60 s.
+Invoke `node …\src\cli.js` directly — never the `munin` command or the npm `.cmd` shim, which
+force a shell on Windows, exactly what raw prompt text must never touch. For a global install
+the file sits under the npm prefix, e.g.
+`%APPDATA%\npm\node_modules\@malinfossum\munin\src\cli.js`;
+`npm root -g` prints the folder.
+Keep the explicit `timeout` so a hang can never ride the default 60 s.
 
 ### Curated sources only
 
