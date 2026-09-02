@@ -2,8 +2,8 @@
 
 Local semantic search over AI memory files. Recall by meaning, cited by source.
 Named after Muninn, Odin's raven of memory, who flies out each day and reports everything he
-has seen. (Naming decided 2026-07-13 after checking alternatives — Malin loves the name and
-keeps it with eyes open: the 20-year-old Munin monitoring tool lives in a different space, the
+has seen. (Naming decided 2026-07-13 after checking alternatives — I love the name and
+keep it with eyes open: the 20-year-old Munin monitoring tool lives in a different space, the
 GitHub repo is namespaced, and npm publishing went scoped as `@malinfossum/munin` with a bare
 `munin` bin. The README carries a one-line disambiguation.)
 
@@ -74,7 +74,7 @@ munin/
   with imports indexed.
 - **M5 — proactive recall.** ✅ Shipped 2026-07-16 — gates green: tests
   68/68, golden 10/10 (Q8 expectation updated to the decision's post-reorganize home,
-  `session-log.md`, per Malin), probes 8/8 on the default `contextMinScore` 0.45, median
+  `session-log.md`, my call), probes 8/8 on the default `contextMinScore` 0.45, median
   `munin context` latency 0.803 s. A `UserPromptSubmit` hook runs `munin context`
   and silently injects the top matches as background context — so brainstorming a new project
   automatically surfaces lessons from earlier ones. Off by default; enabling = registering
