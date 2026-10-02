@@ -139,7 +139,7 @@ munin/
       guarantee the code keeps, and a hub outage can't break indexing
 - [x] Model revision pinned (not just the name) so upstream changes can't silently swap weights
       — done with M2 (pinned 751bff37…, offline-first load with one-time fetch)
-- [x] Single runtime dependency, `package-lock.json` committed, `npm audit` clean (2026-07-13)
+- [x] Single runtime dependency, `package-lock.json` committed, `npm audit` clean (2026-10-02)
 - [x] No telemetry, no analytics, no "phone home" — stated in the README
 - [x] Errors are friendly one-liners; no stack traces or absolute paths leak to users
 - [x] Recall output is data: the skill (M3/M5) must instruct Claude to treat retrieved text as quotes, never as instructions to follow (prompt-injection hygiene) — shipped with M3
