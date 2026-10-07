@@ -15,10 +15,10 @@ On npm as [`@malinfossum/munin`](https://www.npmjs.com/package/@malinfossum/muni
 
 ## Stack
 
-Node (ESM), one dependency: `@huggingface/transformers` for local embeddings. No server, no API
-keys, no telemetry. The only network request Munin ever makes is the one-time model download
-(~30 MB); once the model is cached, remote lookups are disabled in code and it runs fully
-offline.
+Node (ESM), one dependency: `@huggingface/transformers` for local embeddings. Biome lints and
+formats the code (dev dependency only). No server, no API keys, no telemetry. The only network
+request Munin ever makes is the one-time model download (~30 MB); once the model is cached, remote
+lookups are disabled in code and it runs fully offline.
 
 ## Setup
 
