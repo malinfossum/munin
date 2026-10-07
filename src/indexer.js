@@ -48,7 +48,7 @@ export async function buildIndex(config, embed) {
 	const pending = chunks.filter((chunk) => !reusable.has(chunk.hash))
 	for (let i = 0; i < pending.length; i += EMBED_BATCH) {
 		const batch = pending.slice(i, i + EMBED_BATCH)
-		const vectors = await embed(batch.map((chunk) => `${chunk.heading}\n${chunk.text}`))
+		const vectors = await embed(batch.map(embedText))
 		batch.forEach((chunk, j) => {
 			chunk.vector = vectors[j]
 		})
@@ -77,8 +77,14 @@ function relativeName(sourcePath, filePath) {
 	return (relative || path.basename(filePath)).replaceAll("\\", "/")
 }
 
+// The hash covers exactly what is embedded, so renaming a parent heading
+// re-embeds every chunk under it.
+function embedText(chunk) {
+	return `${chunk.breadcrumb}\n${chunk.text}`
+}
+
 function hashChunk(chunk) {
-	return createHash("sha256").update(`${chunk.heading}\n${chunk.text}`).digest("hex")
+	return createHash("sha256").update(embedText(chunk)).digest("hex")
 }
 
 // Links are reported as skipped, not followed — following them risks

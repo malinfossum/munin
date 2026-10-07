@@ -75,3 +75,25 @@ test("latestInlineDate ignores non-date numbers", () => {
 	assert.equal(latestInlineDate("version 2026 and 12-31 but 2026-05-14 — real"), "2026-05-14")
 	assert.equal(latestInlineDate("nothing dated"), null)
 })
+
+test("chunks carry a breadcrumb of ancestor headings", () => {
+	const chunks = chunkMarkdown("# A\nx\n## B\ny\n### C\nz", { ...meta, file: "domain/wend.md" })
+	assert.deepEqual(
+		chunks.map((chunk) => chunk.breadcrumb),
+		["A", "A > B", "A > B > C"]
+	)
+	assert.equal(chunks[2].heading, "C")
+})
+
+test("a sibling or shallower heading closes the deeper ones", () => {
+	const chunks = chunkMarkdown("# A\n## B\n### C\nz\n## D\nw\n# E\nv", meta)
+	assert.deepEqual(
+		chunks.map((chunk) => chunk.breadcrumb),
+		["A > B > C", "A > D", "E"]
+	)
+})
+
+test("intro text keeps the intro crumb", () => {
+	const [chunk] = chunkMarkdown("intro line\n# One\nbody", meta)
+	assert.equal(chunk.breadcrumb, "(intro)")
+})
