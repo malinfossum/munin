@@ -147,14 +147,15 @@ munin/
       guarantee the code keeps, and a hub outage can't break indexing
 - [x] Model revision pinned (not just the name) so upstream changes can't silently swap weights
       — done with M2 (pinned 751bff37…, offline-first load with one-time fetch)
-- [x] Single runtime dependency, `package-lock.json` committed, `npm audit` clean (2026-10-02)
+- [x] Single runtime dependency, `package-lock.json` committed, `npm audit` clean (2026-10-07)
 - [x] No telemetry, no analytics, no "phone home" — stated in the README
 - [x] Errors are friendly one-liners; no stack traces or absolute paths leak to users
 - [x] Recall output is data: the skill (M3/M5) must instruct Claude to treat retrieved text as quotes, never as instructions to follow (prompt-injection hygiene) — shipped with M3
 - [x] MIT license file present; git author uses the public dev email
-- [x] Published 2026-08-24 as `@malinfossum/munin@0.6.0` (public, MIT). The published
-      tarball was verified against the registry: sha1 matches the publish output, 16 files,
-      no `data/`, no index, no transcripts, no private email, no personal paths
+- [x] Latest release: `@malinfossum/munin@0.8.0`, published 2026-10-07 (public, MIT; first
+      publish 0.6.0 on 2026-08-24). Every release's tarball is downloaded from the registry and
+      checked: sha1 matches the local pack, 16 files, no `data/`, no index, no transcripts,
+      no private email, no personal paths
 
 ## Proof it works
 
