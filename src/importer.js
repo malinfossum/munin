@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { scrubSecrets } from "./scrub.js"
+import { scrubSecrets, stripPrivate } from "./scrub.js"
 
 const SENTINEL = ".sentinel.json"
 
@@ -35,7 +35,7 @@ export function transcriptToMarkdown(jsonlText, { name }) {
 		}
 		if (entry.type !== "user" && entry.type !== "assistant") continue
 		if (entry.isSidechain === true || entry.isMeta === true) continue
-		const text = stripInjectedBlocks(extractText(entry.message?.content))
+		const text = stripPrivate(stripInjectedBlocks(extractText(entry.message?.content))).trim()
 		if (!text) continue
 		const date = String(entry.timestamp ?? "").slice(0, 10) || null
 		if (sessionDate === null && date) sessionDate = date

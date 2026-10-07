@@ -122,6 +122,10 @@ to `importSources` (nothing is imported by default):
 Only conversation text is imported. Tool output, tool calls, and Claude's thinking are
 dropped, and a secret scrubber replaces key-shaped strings with `[scrubbed]` before
 anything is written (long opaque tokens like git SHAs are scrubbed too, by design).
+It also scrubs Norwegian fødselsnummer, D-nummer and kontonummer, and card numbers,
+when they pass their checksum (mod 11 or Luhn). Older imports keep the scrubbing they
+were written with: delete `data/imported/.sentinel.json` and re-run `munin import` to
+re-scrub them.
 Re-runs are incremental; the import ledger is written only after a fully successful run.
 Note: transcripts contain other people's words too (collaborators, quoted web content).
 Imported text stays in gitignored `data/` and ranks below your curated memory.
@@ -206,3 +210,11 @@ recalled text is private context: never to be quoted or paraphrased into public 
 
 Munin is read-only over your memory folders. Its index (`data/`) contains the raw text of those
 files. It is gitignored and never leaves your machine.
+
+Wrap anything you never want indexed in `<private>` tags, in a memory file or in a prompt
+that may later be imported:
+
+    Rent goes to <private>the landlord's account</private> on the 1st.
+
+The block is dropped before chunking, so it never reaches the index, search results or
+proactive recall. An unclosed `<private>` drops everything after it.

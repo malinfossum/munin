@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { scrubSecrets } from "../src/scrub.js"
+import { scrubSecrets, stripPrivate } from "../src/scrub.js"
 
 const scrubbed = (text) => scrubSecrets(text).includes("[scrubbed]")
 
@@ -75,4 +75,51 @@ test("bare bearer tokens are scrubbed, short prose after bearer is not", () => {
 test("norwegian text and normal code words survive", () => {
 	const text = "Blåbærsyltetøy på skiva — const handleSubmit = () => {}"
 	assert.equal(scrubSecrets(text), text)
+})
+
+// Synthetic fixtures: month + 80 marks a synthetic fødselsnummer, which is
+// never issued to a real person. Card numbers are published test cards.
+test("checksum-valid norwegian id and account numbers are scrubbed", () => {
+	assert.ok(!scrubSecrets("fnr 01819010001 i søknaden").includes("01819010001"))
+	assert.ok(!scrubSecrets("fødselsnummer: 158299 10087").includes("10087"))
+	assert.ok(!scrubSecrets("kontonr 1234.56.10004 til husleie").includes("10004"))
+	assert.ok(!scrubSecrets("konto 1234 56 10004").includes("10004"))
+	assert.ok(!scrubSecrets("raw 12345610004").includes("12345610004"))
+})
+
+test("card numbers that pass luhn are scrubbed", () => {
+	assert.ok(!scrubSecrets("card 4111 1111 1111 1111 exp").includes("1111 1111"))
+	assert.ok(!scrubSecrets("card 4111-1111-1111-1111").includes("1111-1111"))
+	assert.ok(!scrubSecrets("card 4111111111111111").includes("4111111111111111"))
+	assert.ok(!scrubSecrets("amex 3782 822463 10005").includes("822463"))
+})
+
+test("a trailing number after a card does not hide it", () => {
+	const out = scrubSecrets("paid with 4111 1111 1111 1111 12 kr")
+	assert.ok(!out.includes("4111"))
+	assert.ok(out.includes("12 kr"))
+})
+
+test("numbers that fail the checksum or the shape survive", () => {
+	for (const text of [
+		"order 12345678901 shipped",
+		"card 4111 1111 1111 1112",
+		"call +47 912 34 567 today",
+		"released 2026-10-07 as 1.2.3",
+		"scores 10 20 30 40 50 61 72",
+		"timestamp 1759831234567",
+	]) {
+		assert.equal(scrubSecrets(text), text)
+	}
+})
+
+test("private blocks are stripped, the text around them survives", () => {
+	const out = stripPrivate("before <private>my fnr and bank</private> after")
+	assert.equal(out, "before  after")
+	assert.equal(stripPrivate("a <PRIVATE>x</Private> b <private>y</private> c"), "a  b  c")
+	assert.equal(stripPrivate("keep\n<private>\nmulti\nline\n</private>\nend"), "keep\n\nend")
+})
+
+test("an unclosed private block strips to the end", () => {
+	assert.equal(stripPrivate("keep this <private>but not this\nor this"), "keep this ")
 })

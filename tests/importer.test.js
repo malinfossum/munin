@@ -135,3 +135,11 @@ test("a turn that is only an injected block is dropped entirely", () => {
 	assert.ok(md.includes("a real turn that should survive intact"))
 	assert.ok(!md.includes("only block"))
 })
+
+test("private blocks and norwegian ids never reach imported markdown", () => {
+	const jsonl = userLine("husk <private>kona heter X</private> og fnr 01819010001")
+	const md = transcriptToMarkdown(jsonl, { name: "s" })
+	assert.ok(!md.includes("kona heter"))
+	assert.ok(!md.includes("01819010001"))
+	assert.ok(md.includes("husk"))
+})

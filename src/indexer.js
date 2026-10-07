@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { readdir, readFile, stat } from "node:fs/promises"
 import path from "node:path"
 import { chunkMarkdown } from "./chunker.js"
+import { stripPrivate } from "./scrub.js"
 import { loadIndex, saveIndex } from "./store.js"
 
 const EMBED_BATCH = 16
@@ -27,7 +28,7 @@ export async function buildIndex(config, embed) {
 		skipped.push(...found.skipped)
 		for (const filePath of found.files) {
 			fileCount++
-			const text = await readFile(filePath, "utf8")
+			const text = stripPrivate(await readFile(filePath, "utf8"))
 			const { mtime } = await stat(filePath)
 			const chunkMeta = {
 				file: relativeName(source.path, filePath),

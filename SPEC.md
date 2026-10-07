@@ -125,6 +125,14 @@ munin/
   all five slots on every question — so `importedTopK` (default 2) appends imported results
   after the `topK` curated ones rather than competing for them. Proactive recall passes
   `importedTopK` 0: its chunk cap is a spec'd guardrail.
+- **Post-M5: Norwegian identifiers and `<private>`.** The scrubber caught keys but let
+  fødselsnummer, kontonummer and card numbers through: they are shorter than the 40-character
+  catch-all. Digit runs are now split into groups, and windows of groups are scrubbed when
+  they match a known shape (`11`, `6 5`, `4.2.5`; 13 to 19 digits or groups of four for cards)
+  and pass the checksum (mod 11 or Luhn). Shape plus checksum keeps dates, phone numbers and
+  lists readable; an 11-digit GitHub run ID is an accepted false positive. `<private>` blocks
+  are stripped before chunking in both the indexer and the importer, so they never reach
+  the index.
 
 ## Security & release checklist (before publishing)
 
