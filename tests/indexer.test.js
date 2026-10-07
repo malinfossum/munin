@@ -132,3 +132,25 @@ test("chunks carry imported provenance and the index reports schema 2", async (t
 	assert.equal(byFile["notes.md"], false)
 	assert.equal(byFile["session.md"], true)
 })
+
+test("private blocks in curated files are never indexed", async (t) => {
+	const dir = await mkdtemp(path.join(tmpdir(), "munin-private-"))
+	t.after(() => rm(dir, { recursive: true, force: true }))
+	const doc = path.join(dir, "notes.md")
+	await writeFile(doc, "# Notes\npublic fact\n<private>\nhidden fact\n</private>\nanother fact")
+	const config = {
+		model: "test-model",
+		modelRevision: "main",
+		dataDir: path.join(dir, "data"),
+		sources: [{ path: doc, weight: 1 }],
+	}
+	const embedded = []
+	await buildIndex(config, async (texts) => {
+		embedded.push(...texts)
+		return texts.map(() => [1, 0])
+	})
+	const raw = await readFile(path.join(dir, "data", "index.json"), "utf8")
+	assert.ok(!raw.includes("hidden fact"))
+	assert.ok(!embedded.join("\n").includes("hidden fact"))
+	assert.ok(raw.includes("public fact") && raw.includes("another fact"))
+})
