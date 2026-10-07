@@ -154,3 +154,27 @@ test("private blocks in curated files are never indexed", async (t) => {
 	assert.ok(!embedded.join("\n").includes("hidden fact"))
 	assert.ok(raw.includes("public fact") && raw.includes("another fact"))
 })
+
+test("the embedded text leads with the breadcrumb, and a parent rename re-embeds", async (t) => {
+	const dir = await mkdtemp(path.join(tmpdir(), "munin-crumb-"))
+	t.after(() => rm(dir, { recursive: true, force: true }))
+	const doc = path.join(dir, "notes.md")
+	const config = {
+		model: "test-model",
+		modelRevision: "main",
+		dataDir: path.join(dir, "data"),
+		sources: [{ path: doc, weight: 1 }],
+	}
+	let embedded = []
+	const embed = async (texts) => {
+		embedded.push(...texts)
+		return texts.map(() => [1, 0])
+	}
+	await writeFile(doc, "# Wend\n## Naming\nthe decision")
+	await buildIndex(config, embed)
+	assert.deepEqual(embedded, ["Wend > Naming\nthe decision"])
+	embedded = []
+	await writeFile(doc, "# Munin\n## Naming\nthe decision")
+	const result = await buildIndex(config, embed)
+	assert.equal(result.embedded, 1)
+})

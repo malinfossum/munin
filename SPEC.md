@@ -39,7 +39,7 @@ munin/
 ```
 
 - **Embeddings:** `Xenova/all-MiniLM-L6-v2` via transformers.js — small, CPU, downloads once into `data/models`. Changing the model invalidates the index (the CLI detects the mismatch and asks for a re-index).
-- **Chunking:** split by markdown heading; text before the first heading is an `(intro)` chunk. Each chunk carries `{file, heading, date, hash}`. The hash makes re-indexing incremental.
+- **Chunking:** split by markdown heading; text before the first heading is an `(intro)` chunk. Each chunk carries `{file, heading, breadcrumb, date, hash}`. The breadcrumb is the chain of open ancestor headings (`H1 > H2 > H3`), so a generic `## Resume` keeps the context of the parent section it sits under. Munin embeds `breadcrumb + text`; the heading stays the citation. The hash covers exactly what is embedded, which makes re-indexing incremental and re-embeds every chunk under a renamed parent heading.
 - **Citations:** every result prints `file § heading (date, score)` plus a preview. Below the confidence threshold, Munin says "No confident match." — it never pads results.
 
 ## Milestones

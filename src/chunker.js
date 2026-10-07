@@ -1,4 +1,4 @@
-const HEADING = /^#{1,4}\s+(.*)/
+const HEADING = /^(#{1,4})\s+(.*)/
 const MAX_WORDS = 200
 const OVERLAP_WORDS = 40
 const INLINE_DATE = /\b(20\d{2}-[01]\d-[0-3]\d)\b/g
@@ -6,11 +6,17 @@ const INLINE_DATE = /\b(20\d{2}-[01]\d-[0-3]\d)\b/g
 // Splits a markdown file into one chunk per heading section; long
 // sections are further split into overlapping word windows.
 // Text before the first heading becomes an "(intro)" chunk.
+// Each chunk also carries a breadcrumb ("H1 > H2 > H3"): the
+// nearest heading alone loses context, since "## Naming" means little
+// without the parent it sits under. The breadcrumb is what gets
+// embedded; the heading stays the citation.
 export function chunkMarkdown(text, { file, date }, options = {}) {
 	const maxWords = options.maxWords ?? MAX_WORDS
 	const overlapWords = options.overlapWords ?? OVERLAP_WORDS
 	const chunks = []
 	let heading = "(intro)"
+	let open = []
+	let breadcrumb = "(intro)"
 	let buffer = []
 
 	const flush = () => {
@@ -18,7 +24,7 @@ export function chunkMarkdown(text, { file, date }, options = {}) {
 		buffer = []
 		if (!body) return
 		for (const part of splitLongText(body, maxWords, overlapWords)) {
-			chunks.push({ file, heading, date: latestInlineDate(part) ?? date, text: part })
+			chunks.push({ file, heading, breadcrumb, date: latestInlineDate(part) ?? date, text: part })
 		}
 	}
 
@@ -26,7 +32,10 @@ export function chunkMarkdown(text, { file, date }, options = {}) {
 		const match = HEADING.exec(line)
 		if (match) {
 			flush()
-			heading = match[1].trim()
+			const level = match[1].length
+			heading = match[2].trim()
+			open = [...open.filter((h) => h.level < level), { level, title: heading }]
+			breadcrumb = open.map((h) => h.title).join(" > ")
 		} else {
 			buffer.push(line)
 		}
