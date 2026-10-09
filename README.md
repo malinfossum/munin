@@ -20,6 +20,12 @@ formats the code (dev dependency only). No server, no API keys, no telemetry. Th
 request Munin ever makes is the one-time model download (~30 MB); once the model is cached, remote
 lookups are disabled in code and it runs fully offline.
 
+Embedding model: `Xenova/all-MiniLM-L6-v2`, the ONNX build of
+`sentence-transformers/all-MiniLM-L6-v2`. Apache-2.0, open weights, and the training data is
+disclosed: the model card lists the sentence-pair datasets it was fine-tuned on (S2ORC,
+StackExchange, MS MARCO, Natural Questions and others). `munin.config.json` pins it to a commit
+hash so the weights cannot change underneath you.
+
 ## Setup
 
 ```
