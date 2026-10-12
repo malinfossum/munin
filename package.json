@@ -1,7 +1,7 @@
 {
 	"name": "@malinfossum/munin",
 	"version": "0.8.0",
-	"description": "Local semantic search over your AI memory files — recall by meaning, cited by source.",
+	"description": "Local semantic search over your AI memory files: recall by meaning, cited by source.",
 	"keywords": [
 		"semantic-search",
 		"memory",
@@ -44,7 +44,7 @@
 		"node": ">=20"
 	},
 	"dependencies": {
-		"@huggingface/transformers": "^4.3.0"
+		"@huggingface/transformers": "^4.3.1"
 	},
 	"allowScripts": {
 		"onnxruntime-node@1.30.0": true,
